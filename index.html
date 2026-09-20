@@ -200,6 +200,38 @@
       color:#444;
     }
 
+    .pdf-bank{
+      margin-top:2px;
+      font-size:9px;
+      line-height:1.25;
+      color:#333;
+      font-weight:600;
+    }
+
+    .pdf-qr-wrap{
+      flex:0 0 25mm;
+      width:25mm;
+      text-align:center;
+      align-self:flex-start;
+    }
+
+    .pdf-qr{
+      display:block;
+      width:25mm;
+      height:25mm;
+      object-fit:contain;
+      margin:0 auto;
+      background:#fff;
+    }
+
+    .pdf-qr-label{
+      margin-top:2px;
+      font-size:7.5px;
+      line-height:1.15;
+      font-weight:700;
+      color:#333;
+    }
+
     .pdf-title{
       text-align:center;
       font-size:15px;
@@ -423,6 +455,14 @@ let luotBan = {};
 /* Thông tin cửa hàng (in vào bản gửi khách) */
 const CUA_HANG = 'CTY TNHH MTV ĐỨC THÀNH ĐỨC CƠ';
 const DIEN_THOAI = 'ĐT: 0962672979 - 0979148248';
+
+/* Thông tin thanh toán */
+const NGAN_HANG = 'Agribank';
+const SO_TAI_KHOAN = '5010238397979';
+const TEN_TAI_KHOAN = 'CTy TNHH MTV Đức Thành Đức Cơ';
+/* VietQR yêu cầu accountName dạng không dấu khi tạo Quick Link */
+const TEN_TK_VIETQR = 'CTY TNHH MTV DUC THANH DUC CO';
+const VIETQR_BANK_BIN = '970405';
 
 try{
   const s = JSON.parse(localStorage.getItem('dt_state')||'{}');
@@ -741,6 +781,14 @@ function xuatPDF() {
         <div class="pdf-phone">
           ${escapeHTML(DIEN_THOAI)}
         </div>
+        <div class="pdf-bank">
+          ${escapeHTML(NGAN_HANG)} · STK: ${escapeHTML(SO_TAI_KHOAN)}<br>
+          ${escapeHTML(TEN_TAI_KHOAN)}
+        </div>
+      </div>
+      <div class="pdf-qr-wrap">
+        <img id="pdfQr" class="pdf-qr" src="" alt="QR thanh toán">
+        <div class="pdf-qr-label">QUÉT QR THANH TOÁN</div>
       </div>
     </div>
 
@@ -795,6 +843,27 @@ function xuatPDF() {
     <div class="pdf-thanks">Cảm ơn Quý khách!</div>
   `;
 
+  /*
+   * Tạo VietQR động theo số tiền còn phải thanh toán.
+   * VietQR Quick Link hỗ trợ BANK_ID/BIN, số tài khoản, amount,
+   * addInfo và accountName.
+   */
+  const qrAmount = conLai > 0 ? Math.round(conLai) : Math.round(tt);
+  const qrInfoBase = 'DUC THANH ' + safeDate.slice(0, 14);
+  const qrInfo = qrInfoBase.replace(/[^A-Za-z0-9 ]/g, '').slice(0, 25);
+  const qrUrl =
+    'https://img.vietqr.io/image/' +
+    encodeURIComponent(VIETQR_BANK_BIN) + '-' +
+    encodeURIComponent(SO_TAI_KHOAN) + '-qr_only.png' +
+    '?amount=' + encodeURIComponent(qrAmount) +
+    '&addInfo=' + encodeURIComponent(qrInfo) +
+    '&accountName=' + encodeURIComponent(TEN_TK_VIETQR);
+
+  const qrImg = document.getElementById('pdfQr');
+  if (qrImg) {
+    qrImg.src = qrUrl;
+  }
+
   const oldText = btn ? btn.innerText : '';
 
   if (btn) {
@@ -846,9 +915,27 @@ function xuatPDF() {
     }
   };
 
+  const waitForQr = () => new Promise(resolve => {
+    const img = document.getElementById('pdfQr');
+    if (!img || !img.src) return resolve();
+    if (img.complete && img.naturalWidth > 0) return resolve();
+    let done = false;
+    const finish = () => {
+      if (done) return;
+      done = true;
+      img.removeEventListener('load', finish);
+      img.removeEventListener('error', finish);
+      resolve();
+    };
+    img.addEventListener('load', finish, { once: true });
+    img.addEventListener('error', finish, { once: true });
+    setTimeout(finish, 5000);
+  });
+
   requestAnimationFrame(() => {
     requestAnimationFrame(async () => {
       await waitForPrintFonts();
+      await waitForQr();
       if (btn) btn.innerText = 'Đang mở...';
       printStarted = true;
       window.print();
