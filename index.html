@@ -307,6 +307,9 @@ function soTien(s){ s=(s||'').replace(/[^\d]/g,''); return s?parseInt(s,10):0; }
 /* ---------- Tiện ích ---------- */
 function boDau(s){ return (s||'').toString().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/đ/g,'d'); }
 function tien(n){ return (n||0).toLocaleString('vi-VN'); }
+function padPhai(t,w){ t=String(t); while(t.length<w) t+=' '; return t; }
+function padTrai(t,w){ t=String(t); while(t.length<w) t=' '+t; return t; }
+function tenHang(h){ return h.ten + ((h.chiso && boDau(h.ten).indexOf(boDau(h.chiso))<0) ? ' '+h.chiso : ''); }
 function giaCua(h){ if(cheDo==='no') return (h.no&&h.no>0)?h.no:h.tm; return h.tm; }
 function nowLocal(){ const d=new Date(),p=n=>String(n).padStart(2,'0'); return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+'T'+p(d.getHours())+':'+p(d.getMinutes()); }
 function ngayDep(v){ if(!v) return ''; const [d,t]=v.split('T'); if(!t) return v; const [y,mo,da]=d.split('-'); return da+'/'+mo+'/'+y+' '+t; }
@@ -384,7 +387,7 @@ function veDon(){
   else{
     let html='';
     ids.forEach(id=>{ const h=HANG.find(x=>x.id===id); if(!h) return; const g=giaCua(h),q=gio[id];
-      html+='<div class="line"><div class="line-top"><div><div class="line-name">'+h.ten+(h.chiso?' '+h.chiso:'')+'</div>'
+      html+='<div class="line"><div class="line-top"><div><div class="line-name">'+tenHang(h)+'</div>'
         +'<div class="line-sub">'+tien(g)+' đ × '+q+' '+h.dvt+'</div></div>'
         +'<button class="del" onclick="xoaMon(\''+id+'\')">Xoá</button></div>'
         +'<div class="line-bot"><div class="stepper"><button onclick="them(\''+id+'\',-1)">−</button><input class="qtyin" inputmode="numeric" value="'+q+'" onfocus="this.select()" onchange="datSL(\''+id+'\',this.value)"><button onclick="them(\''+id+'\',1)">+</button></div>'
@@ -408,17 +411,25 @@ function donText(){
   if(ngay) s+='Ngày: '+ngayDep(ngay)+'\n';
   if(khach) s+='Khách: '+khach+'\n';
   s+='\n';
-  let stt=0, soMonDem=0;
-  for(const id in gio){ const h=HANG.find(x=>x.id===id); if(!h) continue; stt++; soMonDem++; const g=giaCua(h);
-    s+=stt+'. '+h.ten+(h.chiso?' '+h.chiso:'')+'\n   '+tien(g)+' đ × '+gio[id]+' = '+tien(g*gio[id])+' đ\n'; }
+  const items=[];
+  for(const id in gio){ const h=HANG.find(x=>x.id===id); if(!h) continue; const g=giaCua(h),qc=gio[id];
+    items.push({ten:tenHang(h), left:tien(g)+' × '+qc+' '+h.dvt+' = ', tot:tien(g*qc)+' đ'}); }
+  const leftW=items.length?Math.max.apply(null,items.map(i=>i.left.length)):0;
+  const totW =items.length?Math.max.apply(null,items.map(i=>i.tot.length)):0;
+  let stt=0;
+  items.forEach(i=>{ stt++; s+=stt+'. '+i.ten+'\n   '+padPhai(i.left,leftW)+padTrai(i.tot,totW)+'\n'; });
   const tong=tongTien(), tt=thanhTien();
   s+='━━━━━━━━━━\n';
-  s+='Số món: '+soMonDem+'\n';
-  s+='Tổng cộng: '+tien(tong)+' đ';
-  if(giam>0){ s+='\nGiảm giá: '+tien(giam)+' đ'; s+='\nThành tiền: '+tien(tt)+' đ'; }
-  if(tra>0){ s+='\nĐã trả: '+tien(tra)+' đ'; s+='\nCòn lại: '+(tra>=tt?'0 đ (đã đủ)':tien(tt-tra)+' đ'); }
-  if(ghichu) s+='\nGhi chú: '+ghichu;
-  s+='\n━━━━━━━━━━\nCảm ơn quý khách!';
+  s+='Số món: '+items.length+'\n';
+  const rows=[['Tổng cộng', tien(tong)+' đ']];
+  if(giam>0){ rows.push(['Giảm giá', tien(giam)+' đ']); rows.push(['Thành tiền', tien(tt)+' đ']); }
+  if(tra>0) rows.push(['Đã trả', tien(tra)+' đ']);
+  rows.push(['► CÒN LẠI', (tra>=tt)?'0 đ (đã đủ)':tien(tt-tra)+' đ']);
+  const lw=Math.max.apply(null,rows.map(r=>r[0].length));
+  const nw=Math.max.apply(null,rows.map(r=>r[1].length));
+  rows.forEach(r=> s+= padPhai(r[0],lw)+'  '+padTrai(r[1],nw)+'\n');
+  if(ghichu) s+='Ghi chú: '+ghichu+'\n';
+  s+='━━━━━━━━━━\nCảm ơn quý khách!';
   return s;
 }
 async function guiDon(){
