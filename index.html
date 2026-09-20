@@ -102,6 +102,11 @@
   .foot-btns button{flex:1;font-family:inherit;font-weight:800;font-size:16px;padding:15px;border-radius:14px;cursor:pointer;border:0}
   .b-clear{background:var(--card);border:2px solid var(--line)!important;color:var(--muted)}
   .b-copy{background:var(--mode);color:#fff}
+  .filters{display:flex;gap:8px;margin-top:10px}
+  .chip{flex:1;font-family:inherit;border:2px solid var(--line);background:var(--card);color:var(--muted);font-weight:700;font-size:14px;padding:10px 6px;border-radius:12px;cursor:pointer;text-align:center}
+  .chip.on{border-color:var(--mode);color:#fff;background:var(--mode)}
+  .qtyin{width:52px;text-align:center;font-family:inherit;font-size:20px;font-weight:800;color:var(--ink);border:2px solid var(--line);border-radius:10px;padding:6px 2px;background:var(--card)}
+  .qtyin:focus{outline:none;border-color:var(--mode)}
   .toast{position:fixed;left:50%;bottom:150px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:var(--paper);padding:12px 18px;border-radius:12px;font-weight:600;font-size:15px;z-index:80;opacity:0;transition:.25s;pointer-events:none}
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 </style>
@@ -119,6 +124,11 @@
   <div class="search-wrap">
     <input id="q" type="search" inputmode="search" autocomplete="off" placeholder="Gõ tên hàng… (vd: dau trau, ure, kali)" oninput="loc()">
     <button class="clear-q" id="clearq" onclick="xoaTim()" aria-label="Xoá">×</button>
+  </div>
+  <div class="filters">
+    <button class="chip on" id="chip-all" onclick="setNhom('all')">Tất cả</button>
+    <button class="chip" id="chip-pb" onclick="setNhom('Phân bón')">Phân bón</button>
+    <button class="chip" id="chip-bvtv" onclick="setNhom('Thuốc BVTV')">Thuốc BVTV</button>
   </div>
   <div class="statusbar">
     <span id="status">Đang tải bảng giá…</span>
@@ -186,6 +196,7 @@ let HANG = [];
 let cheDo = 'tm';
 let gio = {};
 let khach = '', tra = 0, ngay = '';
+let nhomLoc = 'all';
 
 try{
   const s = JSON.parse(localStorage.getItem('dt_state')||'{}');
@@ -194,8 +205,9 @@ try{
   if(s.khach) khach = s.khach;
   if(s.tra) tra = s.tra;
   if(s.ngay) ngay = s.ngay;
+  if(s.nhomLoc) nhomLoc = s.nhomLoc;
 }catch(e){}
-function luu(){ try{ localStorage.setItem('dt_state', JSON.stringify({cheDo,gio,khach,tra,ngay})); }catch(e){} }
+function luu(){ try{ localStorage.setItem('dt_state', JSON.stringify({cheDo,gio,khach,tra,ngay,nhomLoc})); }catch(e){} }
 
 /* ---------- Tải bảng giá ---------- */
 async function taiGia(force){
@@ -293,7 +305,12 @@ function loc(){
   const kw=boDau(document.getElementById('q').value.trim());
   document.getElementById('clearq').classList.toggle('show',kw.length>0);
   if(!HANG.length){ return; }
-  const dsLoc=HANG.filter(h=>{ if(!kw) return true; const hay=boDau(h.ten+' '+h.chiso+' '+h.dvt); return kw.split(/\s+/).every(t=>hay.includes(t)); });
+  const dsLoc=HANG.filter(h=>{
+    if(nhomLoc!=='all' && h.nhom!==nhomLoc) return false;
+    if(!kw) return true;
+    const hay=boDau(h.ten+' '+h.chiso+' '+h.dvt);
+    return kw.split(/\s+/).every(t=>hay.includes(t));
+  });
   const list=document.getElementById('list');
   if(dsLoc.length===0){ list.innerHTML='<div class="empty">Không tìm thấy hàng nào.<br>Thử gõ ngắn hơn, ví dụ “dau trau”.</div>'; return; }
   let html='',nhomHienTai='';
@@ -301,7 +318,7 @@ function loc(){
     if(h.nhom!==nhomHienTai){ nhomHienTai=h.nhom; html+='<div class="group-h">'+h.nhom+'</div>'; }
     const q=gio[h.id]||0;
     const dieuKhien = q>0
-      ? '<div class="stepper"><button onclick="them(\''+h.id+'\',-1)" aria-label="Bớt">−</button><span class="qty">'+q+'</span><button onclick="them(\''+h.id+'\',1)" aria-label="Thêm">+</button></div>'
+      ? '<div class="stepper"><button onclick="them(\''+h.id+'\',-1)" aria-label="Bớt">−</button><input class="qtyin" inputmode="numeric" value="'+q+'" onfocus="this.select()" onchange="datSL(\''+h.id+'\',this.value)"><button onclick="them(\''+h.id+'\',1)" aria-label="Thêm">+</button></div>'
       : '<button class="add" onclick="them(\''+h.id+'\',1)" aria-label="Thêm">+</button>';
     html+='<div class="row"><div class="info"><div class="name">'+h.ten+'</div>'
       +'<div class="meta">'+(h.chiso?'<span class="badge">'+h.chiso+'</span>':'')+'<span class="unit">'+h.dvt+'</span></div>'
@@ -309,6 +326,18 @@ function loc(){
       +'<div class="add-col">'+dieuKhien+'</div></div>';
   });
   list.innerHTML=html;
+}
+function setNhom(v){
+  nhomLoc=v; luu();
+  document.getElementById('chip-all').classList.toggle('on',v==='all');
+  document.getElementById('chip-pb').classList.toggle('on',v==='Phân bón');
+  document.getElementById('chip-bvtv').classList.toggle('on',v==='Thuốc BVTV');
+  loc();
+}
+function datSL(id,val){
+  const n=parseInt((val||'').replace(/[^\d]/g,''))||0;
+  if(n<=0) delete gio[id]; else gio[id]=n;
+  luu(); loc(); veBar(); veDon();
 }
 
 /* ---------- Giỏ ---------- */
@@ -325,7 +354,7 @@ function veDon(){
       html+='<div class="line"><div class="line-top"><div><div class="line-name">'+h.ten+(h.chiso?' '+h.chiso:'')+'</div>'
         +'<div class="line-sub">'+tien(g)+' đ × '+q+' '+h.dvt+'</div></div>'
         +'<button class="del" onclick="xoaMon(\''+id+'\')">Xoá</button></div>'
-        +'<div class="line-bot"><div class="stepper"><button onclick="them(\''+id+'\',-1)">−</button><span class="qty">'+q+'</span><button onclick="them(\''+id+'\',1)">+</button></div>'
+        +'<div class="line-bot"><div class="stepper"><button onclick="them(\''+id+'\',-1)">−</button><input class="qtyin" inputmode="numeric" value="'+q+'" onfocus="this.select()" onchange="datSL(\''+id+'\',this.value)"><button onclick="them(\''+id+'\',1)">+</button></div>'
         +'<div class="line-total">'+tien(g*q)+' đ</div></div></div>';
     });
     body.innerHTML=html;
@@ -366,8 +395,17 @@ document.body.setAttribute('data-che-do',cheDo);
 document.getElementById('btn-tm').classList.toggle('on',cheDo==='tm');
 document.getElementById('btn-no').classList.toggle('on',cheDo==='no');
 (function(){ const c=layCache(); if(c&&c.items&&c.items.length){ HANG=c.items; setStatus('Giá lưu lúc '+gioPhut(new Date(c.at))+' · đang cập nhật…'); } })();
+setNhom(nhomLoc);
 loc(); veBar(); veDon(); dienFields();
 taiGia(false);
+
+/* Tự cập nhật giá khi mở lại app (không tải dồn dập: cách nhau ít nhất 15 giây) */
+let lanTaiCuoi = Date.now();
+function tuLamMoi(){ if(Date.now()-lanTaiCuoi > 15000){ lanTaiCuoi=Date.now(); taiGia(false); } }
+document.addEventListener('visibilitychange', function(){ if(!document.hidden) tuLamMoi(); });
+window.addEventListener('focus', tuLamMoi);
+const _taiGiaGoc = taiGia;
+taiGia = async function(f){ lanTaiCuoi = Date.now(); return _taiGiaGoc(f); };
 </script>
 </body>
 </html>
