@@ -157,7 +157,9 @@
       padding:0 !important;
       background:#fff !important;
       color:#000 !important;
-      font-family:Arial,"Helvetica Neue",sans-serif !important;
+      /* Dùng đúng font giao diện và giữ fallback có sẵn trên Windows */
+      font-family:"Be Vietnam Pro",Arial,"Segoe UI",Tahoma,sans-serif !important;
+      font-synthesis:none !important;
       font-size:11px;
       line-height:1.35;
     }
@@ -796,11 +798,12 @@ function xuatPDF() {
   const oldText = btn ? btn.innerText : '';
 
   if (btn) {
-    btn.innerText = 'Đang mở...';
+    btn.innerText = 'Đang chuẩn bị...';
     btn.disabled = true;
   }
 
   let restored = false;
+  let printStarted = false;
 
   const restore = () => {
     if (restored) return;
@@ -817,23 +820,38 @@ function xuatPDF() {
     window.removeEventListener('afterprint', restore);
   };
 
-  window.addEventListener('afterprint', restore);
+  window.addEventListener('afterprint', restore, { once: true });
+
+  const onVisibilityBack = () => {
+    if (printStarted && document.visibilityState === 'visible') {
+      restore();
+      window.removeEventListener('visibilitychange', onVisibilityBack);
+    }
+  };
+  window.addEventListener('visibilitychange', onVisibilityBack);
+
+  // Chờ font Be Vietnam Pro tải xong trước khi chụp nội dung để in PDF.
+  // Nếu Google Fonts không tải được, trình duyệt vẫn dùng Arial/Segoe UI/Tahoma.
+  const waitForPrintFonts = async () => {
+    if (!document.fonts) return;
+    try {
+      await document.fonts.ready;
+      await Promise.all([
+        document.fonts.load('400 11px "Be Vietnam Pro"'),
+        document.fonts.load('700 11px "Be Vietnam Pro"'),
+        document.fonts.load('800 14px "Be Vietnam Pro"')
+      ]);
+    } catch (e) {
+      // Font dự phòng sẽ được dùng nếu font web không khả dụng.
+    }
+  };
 
   requestAnimationFrame(() => {
-    requestAnimationFrame(() => {
+    requestAnimationFrame(async () => {
+      await waitForPrintFonts();
+      if (btn) btn.innerText = 'Đang mở...';
+      printStarted = true;
       window.print();
-
-      /*
-       * Một số mobile browser không phát afterprint ổn định.
-       * Cho phép giao diện khôi phục khi quay lại ứng dụng.
-       */
-      setTimeout(() => {
-        // Một số trình duyệt không phát afterprint/visibilitychange ổn định.
-        // Không xóa hóa đơn khi hộp thoại in vẫn đang mở.
-        if (document.visibilityState === 'visible') {
-          restore();
-        }
-      }, 1500);
     });
   });
 }
