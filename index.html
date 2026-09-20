@@ -102,6 +102,12 @@
   .foot-btns button{flex:1;font-family:inherit;font-weight:800;font-size:16px;padding:15px;border-radius:14px;cursor:pointer;border:0}
   .b-clear{background:var(--card);border:2px solid var(--line)!important;color:var(--muted)}
   .b-copy{background:var(--mode);color:#fff}
+  .b-send{background:var(--card);border:2px solid var(--mode)!important;color:var(--mode)}
+  .payfull{border:1.5px solid var(--mode);background:var(--card);color:var(--mode);font-family:inherit;font-weight:800;font-size:13px;padding:11px 12px;border-radius:11px;cursor:pointer;white-space:nowrap}
+  .pay-row .grp{display:flex;gap:8px;align-items:center}
+  .grand.sub{margin-bottom:8px}
+  .grand.sub .lbl{font-size:15px;font-weight:700}
+  .grand.sub .val{font-size:24px;font-weight:800}
   .filters{display:flex;gap:8px;margin-top:10px}
   .chip{flex:1;font-family:inherit;border:2px solid var(--line);background:var(--card);color:var(--muted);font-weight:700;font-size:14px;padding:10px 6px;border-radius:12px;cursor:pointer;text-align:center}
   .chip.on{border-color:var(--mode);color:#fff;background:var(--mode)}
@@ -158,6 +164,7 @@
     <div class="don-info">
       <label>Ngày giờ<input type="datetime-local" id="fNgay" onchange="luuField()"></label>
       <label>Tên khách hàng<input type="text" id="fKhach" placeholder="Nhập tên khách (nếu cần)" oninput="luuField()"></label>
+      <label>Ghi chú<input type="text" id="fGhiChu" placeholder="vd: giao chiều nay, nợ tới mùa…" oninput="luuField()"></label>
     </div>
     <div id="sheetBody"></div>
   </div>
@@ -167,8 +174,16 @@
       <span class="val" id="grandVal">0 <span class="cur">đ</span></span>
     </div>
     <div class="pay-row">
+      <label for="fGiam">Giảm giá</label>
+      <span class="money"><input id="fGiam" type="text" inputmode="numeric" placeholder="0" oninput="nhapGiam()"></span>
+    </div>
+    <div class="grand sub" id="thanhTienRow" style="display:none">
+      <span class="lbl">Thành tiền</span>
+      <span class="val" id="thanhTienVal">0 <span class="cur">đ</span></span>
+    </div>
+    <div class="pay-row">
       <label for="fTra">Khách đã trả</label>
-      <span class="money"><input id="fTra" type="text" inputmode="numeric" placeholder="0" oninput="nhapTra()"></span>
+      <span class="grp"><button class="payfull" onclick="traDu()">Trả đủ</button><span class="money"><input id="fTra" type="text" inputmode="numeric" placeholder="0" oninput="nhapTra()"></span></span>
     </div>
     <div class="grand remain" id="remainRow">
       <span class="lbl">Còn lại</span>
@@ -176,7 +191,8 @@
     </div>
     <div class="foot-btns">
       <button class="b-clear" onclick="xoaDon()">Xoá đơn</button>
-      <button class="b-copy" onclick="chiaSe()">Gửi / Sao chép</button>
+      <button class="b-send" onclick="saoChep()">Sao chép</button>
+      <button class="b-copy" onclick="guiDon()">Gửi</button>
     </div>
   </div>
 </div>
@@ -197,6 +213,11 @@ let cheDo = 'tm';
 let gio = {};
 let khach = '', tra = 0, ngay = '';
 let nhomLoc = 'all';
+let giam = 0, ghichu = '';
+
+/* Thông tin cửa hàng (in vào bản gửi khách) */
+const CUA_HANG = 'CTY TNHH MTV ĐỨC THÀNH ĐỨC CƠ';
+const DIEN_THOAI = 'ĐT: 0962672979 - 0979148248';
 
 try{
   const s = JSON.parse(localStorage.getItem('dt_state')||'{}');
@@ -206,8 +227,10 @@ try{
   if(s.tra) tra = s.tra;
   if(s.ngay) ngay = s.ngay;
   if(s.nhomLoc) nhomLoc = s.nhomLoc;
+  if(s.giam) giam = s.giam;
+  if(s.ghichu) ghichu = s.ghichu;
 }catch(e){}
-function luu(){ try{ localStorage.setItem('dt_state', JSON.stringify({cheDo,gio,khach,tra,ngay,nhomLoc})); }catch(e){} }
+function luu(){ try{ localStorage.setItem('dt_state', JSON.stringify({cheDo,gio,khach,tra,ngay,nhomLoc,giam,ghichu})); }catch(e){} }
 
 /* ---------- Tải bảng giá ---------- */
 async function taiGia(force){
@@ -287,10 +310,20 @@ function tien(n){ return (n||0).toLocaleString('vi-VN'); }
 function giaCua(h){ if(cheDo==='no') return (h.no&&h.no>0)?h.no:h.tm; return h.tm; }
 function nowLocal(){ const d=new Date(),p=n=>String(n).padStart(2,'0'); return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+'T'+p(d.getHours())+':'+p(d.getMinutes()); }
 function ngayDep(v){ if(!v) return ''; const [d,t]=v.split('T'); if(!t) return v; const [y,mo,da]=d.split('-'); return da+'/'+mo+'/'+y+' '+t; }
-function luuField(){ ngay=document.getElementById('fNgay').value; khach=document.getElementById('fKhach').value; luu(); }
+function luuField(){ ngay=document.getElementById('fNgay').value; khach=document.getElementById('fKhach').value; ghichu=document.getElementById('fGhiChu').value; luu(); }
 function nhapTra(){ const el=document.getElementById('fTra'); const raw=el.value.replace(/[^\d]/g,''); tra=raw?parseInt(raw,10):0; el.value=raw?tra.toLocaleString('vi-VN'):''; luu(); capNhatConLai(); }
-function capNhatConLai(){ const tong=tongTien(),row=document.getElementById('remainRow'),val=document.getElementById('remainVal'); if(tong>0&&tra>=tong){row.classList.add('done');val.innerHTML='Đã đủ';}else{row.classList.remove('done');val.innerHTML=tien(tong-tra)+' <span class="cur">đ</span>';} }
-function dienFields(){ if(!ngay) ngay=nowLocal(); document.getElementById('fNgay').value=ngay; document.getElementById('fKhach').value=khach||''; document.getElementById('fTra').value=tra?tra.toLocaleString('vi-VN'):''; capNhatConLai(); }
+function nhapGiam(){ const el=document.getElementById('fGiam'); const raw=el.value.replace(/[^\d]/g,''); giam=raw?parseInt(raw,10):0; el.value=raw?giam.toLocaleString('vi-VN'):''; luu(); capNhatConLai(); }
+function thanhTien(){ return Math.max(0, tongTien()-giam); }
+function traDu(){ tra=thanhTien(); document.getElementById('fTra').value=tra?tra.toLocaleString('vi-VN'):''; luu(); capNhatConLai(); }
+function capNhatConLai(){
+  const tt=thanhTien();
+  const ttRow=document.getElementById('thanhTienRow');
+  ttRow.style.display = giam>0 ? 'flex' : 'none';
+  document.getElementById('thanhTienVal').innerHTML=tien(tt)+' <span class="cur">đ</span>';
+  const row=document.getElementById('remainRow'),val=document.getElementById('remainVal');
+  if(tt>0&&tra>=tt){row.classList.add('done');val.innerHTML='Đã đủ';}else{row.classList.remove('done');val.innerHTML=tien(tt-tra)+' <span class="cur">đ</span>';}
+}
+function dienFields(){ if(!ngay) ngay=nowLocal(); document.getElementById('fNgay').value=ngay; document.getElementById('fKhach').value=khach||''; document.getElementById('fGhiChu').value=ghichu||''; document.getElementById('fTra').value=tra?tra.toLocaleString('vi-VN'):''; document.getElementById('fGiam').value=giam?giam.toLocaleString('vi-VN'):''; capNhatConLai(); }
 
 /* ---------- Chế độ giá ---------- */
 function datCheDo(m){
@@ -367,25 +400,35 @@ function xoaMon(id){ delete gio[id]; luu(); loc(); veBar(); veDon(); }
 /* ---------- Sheet ---------- */
 function moDon(){ if(soMon()===0) return; dienFields(); document.getElementById('scrim').classList.add('open'); document.getElementById('sheet').classList.add('open'); }
 function dongDon(){ document.getElementById('scrim').classList.remove('open'); document.getElementById('sheet').classList.remove('open'); }
-function xoaDon(){ gio={}; khach=''; tra=0; ngay=nowLocal(); luu(); loc(); veBar(); veDon(); dienFields(); dongDon(); }
+function xoaDon(){ gio={}; khach=''; tra=0; giam=0; ghichu=''; ngay=nowLocal(); luu(); loc(); veBar(); veDon(); dienFields(); dongDon(); }
 
 /* ---------- Xuất đơn ---------- */
 function donText(){
-  let s='ĐỨC THÀNH\n';
+  let s=CUA_HANG+'\n'+DIEN_THOAI+'\n━━━━━━━━━━\n';
   if(ngay) s+='Ngày: '+ngayDep(ngay)+'\n';
   if(khach) s+='Khách: '+khach+'\n';
-  s+='Giá: '+(cheDo==='no'?'nợ':'tiền mặt')+'\n———\n';
-  let stt=0;
-  for(const id in gio){ const h=HANG.find(x=>x.id===id); if(!h) continue; stt++; const g=giaCua(h);
-    s+=stt+'. '+h.ten+(h.chiso?' '+h.chiso:'')+'  '+tien(g)+' × '+gio[id]+' = '+tien(g*gio[id])+' đ\n'; }
-  const tong=tongTien(); s+='———\nTỔNG: '+tien(tong)+' đ';
-  if(tra>0){ s+='\nĐã trả: '+tien(tra)+' đ'; s+='\nCòn lại: '+(tra>=tong?'0 đ (đã đủ)':tien(tong-tra)+' đ'); }
+  s+='\n';
+  let stt=0, soMonDem=0;
+  for(const id in gio){ const h=HANG.find(x=>x.id===id); if(!h) continue; stt++; soMonDem++; const g=giaCua(h);
+    s+=stt+'. '+h.ten+(h.chiso?' '+h.chiso:'')+'\n   '+tien(g)+' đ × '+gio[id]+' = '+tien(g*gio[id])+' đ\n'; }
+  const tong=tongTien(), tt=thanhTien();
+  s+='━━━━━━━━━━\n';
+  s+='Số món: '+soMonDem+'\n';
+  s+='Tổng cộng: '+tien(tong)+' đ';
+  if(giam>0){ s+='\nGiảm giá: '+tien(giam)+' đ'; s+='\nThành tiền: '+tien(tt)+' đ'; }
+  if(tra>0){ s+='\nĐã trả: '+tien(tra)+' đ'; s+='\nCòn lại: '+(tra>=tt?'0 đ (đã đủ)':tien(tt-tra)+' đ'); }
+  if(ghichu) s+='\nGhi chú: '+ghichu;
+  s+='\n━━━━━━━━━━\nCảm ơn quý khách!';
   return s;
 }
-async function chiaSe(){
+async function guiDon(){
   const txt=donText();
-  if(navigator.share){ try{ await navigator.share({text:txt}); return; }catch(e){} }
-  try{ await navigator.clipboard.writeText(txt); toast('Đã sao chép đơn'); }catch(e){ toast('Không sao chép được'); }
+  if(navigator.share){ try{ await navigator.share({text:txt}); return; }catch(e){ if(e && e.name==='AbortError') return; } }
+  try{ await navigator.clipboard.writeText(txt); toast('Máy không có nút chia sẻ — đã sao chép, mở Zalo dán vào'); }catch(e){ toast('Không gửi được'); }
+}
+async function saoChep(){
+  try{ await navigator.clipboard.writeText(donText()); toast('Đã sao chép đơn'); }
+  catch(e){ toast('Không sao chép được'); }
 }
 let toTimer; function toast(m){ const t=document.getElementById('toast'); t.textContent=m; t.classList.add('show'); clearTimeout(toTimer); toTimer=setTimeout(()=>t.classList.remove('show'),1800); }
 function xoaTim(){ document.getElementById('q').value=''; loc(); document.getElementById('q').focus(); }
