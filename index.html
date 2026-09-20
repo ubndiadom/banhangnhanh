@@ -12,10 +12,6 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-
-<!-- THƯ VIỆN XUẤT PDF -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-
 <style>
   :root{
     --paper:#F7F8F5; --card:#FFFFFF; --ink:#16231C; --muted:#5C6B60; --line:#DCE3DA;
@@ -128,6 +124,193 @@
   .qtyin:focus{outline:none;border-color:var(--mode)}
   .toast{position:fixed;left:50%;bottom:150px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:var(--paper);padding:12px 18px;border-radius:12px;font-weight:600;font-size:15px;z-index:80;opacity:0;transition:.25s;pointer-events:none}
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  /* =========================================================
+     IN HÓA ĐƠN A5 - NATIVE PRINT
+     ========================================================= */
+
+  #printInvoice{display:none}
+
+  @page{
+    size:A5 portrait;
+    margin:8mm;
+  }
+
+  @media print{
+    html,body{
+      width:148mm !important;
+      min-width:148mm !important;
+      max-width:148mm !important;
+      margin:0 !important;
+      padding:0 !important;
+      background:#fff !important;
+      color:#000 !important;
+    }
+
+    body > *:not(#printInvoice){
+      display:none !important;
+    }
+
+    #printInvoice{
+      display:block !important;
+      width:100% !important;
+      margin:0 !important;
+      padding:0 !important;
+      background:#fff !important;
+      color:#000 !important;
+      font-family:Arial,"Helvetica Neue",sans-serif !important;
+      font-size:11px;
+      line-height:1.35;
+    }
+
+    #printInvoice,#printInvoice *{box-sizing:border-box}
+
+    .pdf-head{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      border-bottom:1.5px solid #1E7A46;
+      padding-bottom:7px;
+      margin-bottom:8px;
+    }
+
+    .pdf-logo{
+      width:52px;
+      height:52px;
+      object-fit:contain;
+      flex:0 0 52px;
+    }
+
+    .pdf-company{
+      flex:1;
+      min-width:0;
+    }
+
+    .pdf-company-name{
+      font-size:14px;
+      line-height:1.2;
+      font-weight:800;
+      color:#1E7A46;
+    }
+
+    .pdf-phone{
+      margin-top:3px;
+      font-size:9.5px;
+      color:#444;
+    }
+
+    .pdf-title{
+      text-align:center;
+      font-size:15px;
+      font-weight:800;
+      margin:7px 0 9px;
+    }
+
+    .pdf-info{
+      margin-bottom:8px;
+      font-size:10.5px;
+    }
+
+    .pdf-info-row{margin:2px 0}
+
+    .pdf-table{
+      width:100%;
+      border-collapse:collapse;
+      table-layout:fixed;
+      margin-top:4px;
+    }
+
+    .pdf-table th{
+      padding:5px 3px;
+      border-top:1px solid #777;
+      border-bottom:1px solid #777;
+      font-size:9.5px;
+      font-weight:800;
+      text-align:left;
+    }
+
+    .pdf-table td{
+      padding:5px 3px;
+      border-bottom:1px dashed #ccc;
+      vertical-align:top;
+      font-size:9.5px;
+    }
+
+    .pdf-col-name{width:58%}
+    .pdf-col-qty{
+      width:12%;
+      text-align:center !important;
+    }
+    .pdf-col-price{
+      width:30%;
+      text-align:right !important;
+    }
+
+    .pdf-product-name{
+      font-weight:700;
+      word-break:break-word;
+    }
+
+    .pdf-product-sub{
+      margin-top:1px;
+      color:#555;
+      font-size:8.5px;
+    }
+
+    .pdf-summary{
+      margin-top:9px;
+      margin-left:auto;
+      width:72%;
+      font-size:10px;
+    }
+
+    .pdf-summary-row{
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      padding:2px 0;
+    }
+
+    .pdf-summary-row strong{white-space:nowrap}
+
+    .pdf-total{
+      font-size:12px;
+      font-weight:800;
+    }
+
+    .pdf-remain{
+      color:#B23B2E;
+      font-size:12px;
+      font-weight:800;
+      border-top:1px solid #999;
+      margin-top:3px;
+      padding-top:4px;
+    }
+
+    .pdf-note{
+      margin-top:9px;
+      padding-top:6px;
+      border-top:1px dashed #bbb;
+      font-size:9.5px;
+      font-style:italic;
+    }
+
+    .pdf-thanks{
+      text-align:center;
+      margin-top:15px;
+      font-size:9px;
+      color:#555;
+      font-weight:700;
+    }
+
+    .pdf-table tr,
+    .pdf-summary,
+    .pdf-note,
+    .pdf-thanks{
+      break-inside:avoid;
+      page-break-inside:avoid;
+    }
+  }
+
 </style>
 </head>
 <body data-che-do="tm">
@@ -442,102 +625,222 @@ function dongDon(){ document.getElementById('scrim').classList.remove('open'); d
 function xoaDon(){ gio={}; khach=''; tra=0; giam=0; ghichu=''; ngay=nowLocal(); luu(); loc(); veBar(); veDon(); dienFields(); dongDon(); }
 
 /* ---------- Tính năng Xuất PDF ---------- */
-/* ---------- Tính năng Xuất PDF ---------- */
-async function xuatPDF() {
+function xuatPDF() {
+
   const btn = document.getElementById('btnPdf');
-  const oldText = btn.innerText;
-  btn.innerText = "Đang tạo...";
-  btn.disabled = true;
+  const invoice = document.getElementById('printInvoice');
 
-  // Lấy thời gian để làm tên file
-  let thoiGian = ngay || nowLocal();
-  let tenFile = 'DonHang_' + thoiGian.replace(/[-T:]/g, '') + '.pdf';
-
-  // 1. TẠO MỘT KHUNG HÓA ĐƠN THỰC TẾ NHƯNG GIẤU ĐI (Fix lỗi trang trắng)
-  const element = document.createElement('div');
-  element.style.width = '148mm'; // Ép cứng kích thước bề ngang A5
-  element.style.padding = '15px';
-  element.style.fontFamily = 'sans-serif';
-  element.style.color = '#000';
-  element.style.backgroundColor = '#fff';
-  element.style.position = 'absolute';
-  element.style.left = '-9999px'; // Giấu ra khỏi màn hình
-  element.style.top = '0';
-
-  let html = `
-    <div style="display:flex; align-items:center; border-bottom:2px solid #1E7A46; padding-bottom:10px; margin-bottom:15px;">
-      <img src="logo.png" style="width:65px; height:65px; object-fit:contain; margin-right:15px;" crossorigin="anonymous">
-      <div>
-        <h2 style="margin:0; font-size:18px; color:#1E7A46;">${CUA_HANG}</h2>
-        <p style="margin:4px 0 0; font-size:13px; color:#555;">${DIEN_THOAI}</p>
-      </div>
-    </div>
-    <h3 style="text-align:center; font-size:18px; margin-bottom:15px;">HÓA ĐƠN BÁN HÀNG</h3>
-    <div style="font-size:14px; margin-bottom:15px;">
-      <p style="margin:4px 0;"><strong>Ngày:</strong> ${ngayDep(thoiGian)}</p>
-      ${khach ? `<p style="margin:4px 0;"><strong>Khách hàng:</strong> ${khach}</p>` : ''}
-    </div>
-    <table style="width:100%; border-collapse:collapse; font-size:14px; margin-bottom:15px;">
-      <tr style="border-bottom:1px solid #aaa; text-align:left;">
-        <th style="padding:8px 0;">Tên hàng</th>
-        <th style="padding:8px 0; text-align:center;">SL</th>
-        <th style="padding:8px 0; text-align:right;">Thành tiền</th>
-      </tr>`;
-
-  let stt = 0;
-  for(const id in gio){
-    const h = HANG.find(x => x.id === id);
-    if(!h) continue;
-    const g = giaCua(h), qc = gio[id];
-    html += `
-      <tr style="border-bottom:1px dashed #ddd;">
-        <td style="padding:10px 0; padding-right:5px;">${tenHang(h)}<br><small style="color:#666;">${tien(g)} đ / ${h.dvt}</small></td>
-        <td style="padding:10px 0; text-align:center; font-weight:bold;">${qc}</td>
-        <td style="padding:10px 0; text-align:right; font-weight:bold;">${tien(g * qc)} đ</td>
-      </tr>`;
+  if (!invoice) {
+    toast('Không tìm thấy vùng hóa đơn');
+    return;
   }
 
-  html += `</table>
-    <div style="font-size:15px; text-align:right; margin-bottom:20px;">
-      <p style="margin:6px 0;">Tổng cộng: <strong>${tien(tongTien())} đ</strong></p>
-      ${giam > 0 ? `<p style="margin:6px 0;">Giảm giá: <strong>${tien(giam)} đ</strong></p>` : ''}
-      ${giam > 0 ? `<p style="margin:6px 0;">Thành tiền: <strong>${tien(thanhTien())} đ</strong></p>` : ''}
-      ${tra > 0 ? `<p style="margin:6px 0;">Đã trả: <strong>${tien(tra)} đ</strong></p>` : ''}
-      <p style="margin:6px 0; font-size:17px; color:#B23B2E;">CÒN LẠI: <strong>${tra >= thanhTien() ? '0 đ' : tien(thanhTien() - tra) + ' đ'}</strong></p>
+  const ids = Object.keys(gio).filter(id =>
+    HANG.some(h => h.id === id)
+  );
+
+  if (!ids.length) {
+    toast('Đơn hàng chưa có sản phẩm');
+    return;
+  }
+
+  const thoiGian = ngay || nowLocal();
+
+  const safeDate = thoiGian
+    .replace(/[-T:]/g, '')
+    .replace(/[^\d]/g, '');
+
+  const tenFile = 'DonHang_' + safeDate;
+
+  const oldTitle = document.title;
+  document.title = tenFile;
+
+  let rows = '';
+
+  ids.forEach(id => {
+    const h = HANG.find(x => x.id === id);
+    if (!h) return;
+
+    const gia = giaCua(h);
+    const sl = gio[id];
+    const thanhTienHang = gia * sl;
+
+    rows += `
+      <tr>
+        <td class="pdf-col-name">
+          <div class="pdf-product-name">
+            ${escapeHTML(tenHang(h))}
+          </div>
+          <div class="pdf-product-sub">
+            ${tien(gia)} đ / ${escapeHTML(h.dvt || '')}
+          </div>
+        </td>
+        <td class="pdf-col-qty">${sl}</td>
+        <td class="pdf-col-price">
+          <strong>${tien(thanhTienHang)} đ</strong>
+        </td>
+      </tr>
+    `;
+  });
+
+  const tong = tongTien();
+  const tt = thanhTien();
+  const conLai = Math.max(0, tt - tra);
+
+  let summary = `
+    <div class="pdf-summary-row">
+      <span>Tổng cộng</span>
+      <strong>${tien(tong)} đ</strong>
     </div>
-    ${ghichu ? `<p style="font-size:14px; font-style:italic;">Ghi chú: ${ghichu}</p>` : ''}
-    <p style="text-align:center; font-size:13px; margin-top:40px; font-weight:bold; color:#555;">Cảm ơn Quý khách!</p>
   `;
 
-  // Gắn khung vào trang web
-  element.innerHTML = html;
-  document.body.appendChild(element);
+  if (giam > 0) {
+    summary += `
+      <div class="pdf-summary-row">
+        <span>Giảm giá</span>
+        <strong>${tien(giam)} đ</strong>
+      </div>
+      <div class="pdf-summary-row pdf-total">
+        <span>Thành tiền</span>
+        <strong>${tien(tt)} đ</strong>
+      </div>
+    `;
+  }
 
-  // Cấu hình thông số PDF (Khổ A5)
-  const opt = {
-    margin:       [10, 10, 10, 10],
-    filename:     tenFile,
-    image:        { type: 'jpeg', quality: 0.98 },
-    html2canvas:  { scale: 2, useCORS: true },
-    jsPDF:        { unit: 'mm', format: 'a5', orientation: 'portrait' }
+  if (tra > 0) {
+    summary += `
+      <div class="pdf-summary-row">
+        <span>Khách đã trả</span>
+        <strong>${tien(tra)} đ</strong>
+      </div>
+    `;
+  }
+
+  summary += `
+    <div class="pdf-summary-row pdf-remain">
+      <span>CÒN LẠI</span>
+      <strong>
+        ${conLai > 0 ? tien(conLai) + ' đ' : '0 đ — ĐÃ ĐỦ'}
+      </strong>
+    </div>
+  `;
+
+  invoice.innerHTML = `
+    <div class="pdf-head">
+      <img class="pdf-logo" src="logo.png" alt="">
+      <div class="pdf-company">
+        <div class="pdf-company-name">
+          ${escapeHTML(CUA_HANG)}
+        </div>
+        <div class="pdf-phone">
+          ${escapeHTML(DIEN_THOAI)}
+        </div>
+      </div>
+    </div>
+
+    <div class="pdf-title">HÓA ĐƠN BÁN HÀNG</div>
+
+    <div class="pdf-info">
+      <div class="pdf-info-row">
+        <strong>Ngày:</strong>
+        ${escapeHTML(ngayDep(thoiGian))}
+      </div>
+
+      ${
+        khach
+          ? `
+            <div class="pdf-info-row">
+              <strong>Khách hàng:</strong>
+              ${escapeHTML(khach)}
+            </div>
+          `
+          : ''
+      }
+    </div>
+
+    <table class="pdf-table">
+      <thead>
+        <tr>
+          <th class="pdf-col-name">Tên hàng</th>
+          <th class="pdf-col-qty">SL</th>
+          <th class="pdf-col-price">Thành tiền</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${rows}
+      </tbody>
+    </table>
+
+    <div class="pdf-summary">
+      ${summary}
+    </div>
+
+    ${
+      ghichu
+        ? `
+          <div class="pdf-note">
+            <strong>Ghi chú:</strong>
+            ${escapeHTML(ghichu)}
+          </div>
+        `
+        : ''
+    }
+
+    <div class="pdf-thanks">Cảm ơn Quý khách!</div>
+  `;
+
+  const oldText = btn ? btn.innerText : '';
+
+  if (btn) {
+    btn.innerText = 'Đang mở...';
+    btn.disabled = true;
+  }
+
+  let restored = false;
+
+  const restore = () => {
+    if (restored) return;
+    restored = true;
+
+    document.title = oldTitle;
+    invoice.innerHTML = '';
+
+    if (btn) {
+      btn.innerText = oldText;
+      btn.disabled = false;
+    }
+
+    window.removeEventListener('afterprint', restore);
   };
 
-  // 2. ĐỢI 0.6 GIÂY CHO ẢNH TẢI XONG RỒI MỚI CHỤP PDF
-  setTimeout(async () => {
-    try {
-      await html2pdf().set(opt).from(element).save();
-      toast('Đã tải hóa đơn PDF');
-    } catch (err) {
-      toast('Lỗi khi tạo PDF');
-      console.error(err);
-    }
-    
-    // 3. Dọn dẹp: Xóa khung ẩn và khôi phục nút bấm
-    document.body.removeChild(element);
-    btn.innerText = oldText;
-    btn.disabled = false;
-  }, 600);
+  window.addEventListener('afterprint', restore);
+
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      window.print();
+
+      /*
+       * Một số mobile browser không phát afterprint ổn định.
+       * Cho phép giao diện khôi phục khi quay lại ứng dụng.
+       */
+      setTimeout(() => {
+        if (document.visibilityState === 'visible') {
+          restore();
+        }
+      }, 1000);
+    });
+  });
 }
+
+function escapeHTML(value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
 /* ---------- Xuất đơn dạng Text ---------- */
 function donText(){
   let s=CUA_HANG+'\n'+DIEN_THOAI+'\n━━━━━━━━━━\n';
