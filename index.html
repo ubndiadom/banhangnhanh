@@ -442,6 +442,7 @@ function dongDon(){ document.getElementById('scrim').classList.remove('open'); d
 function xoaDon(){ gio={}; khach=''; tra=0; giam=0; ghichu=''; ngay=nowLocal(); luu(); loc(); veBar(); veDon(); dienFields(); dongDon(); }
 
 /* ---------- Tính năng Xuất PDF ---------- */
+/* ---------- Tính năng Xuất PDF ---------- */
 async function xuatPDF() {
   const btn = document.getElementById('btnPdf');
   const oldText = btn.innerText;
@@ -452,8 +453,18 @@ async function xuatPDF() {
   let thoiGian = ngay || nowLocal();
   let tenFile = 'DonHang_' + thoiGian.replace(/[-T:]/g, '') + '.pdf';
 
-  // Dựng khung HTML của Hóa đơn (Chỉ dùng để vẽ PDF, không hiện lên màn hình)
-  let html = `<div style="padding:15px; font-family:sans-serif; color:#000;">
+  // 1. TẠO MỘT KHUNG HÓA ĐƠN THỰC TẾ NHƯNG GIẤU ĐI (Fix lỗi trang trắng)
+  const element = document.createElement('div');
+  element.style.width = '148mm'; // Ép cứng kích thước bề ngang A5
+  element.style.padding = '15px';
+  element.style.fontFamily = 'sans-serif';
+  element.style.color = '#000';
+  element.style.backgroundColor = '#fff';
+  element.style.position = 'absolute';
+  element.style.left = '-9999px'; // Giấu ra khỏi màn hình
+  element.style.top = '0';
+
+  let html = `
     <div style="display:flex; align-items:center; border-bottom:2px solid #1E7A46; padding-bottom:10px; margin-bottom:15px;">
       <img src="logo.png" style="width:65px; height:65px; object-fit:contain; margin-right:15px;" crossorigin="anonymous">
       <div>
@@ -496,7 +507,11 @@ async function xuatPDF() {
     </div>
     ${ghichu ? `<p style="font-size:14px; font-style:italic;">Ghi chú: ${ghichu}</p>` : ''}
     <p style="text-align:center; font-size:13px; margin-top:40px; font-weight:bold; color:#555;">Cảm ơn Quý khách!</p>
-  </div>`;
+  `;
+
+  // Gắn khung vào trang web
+  element.innerHTML = html;
+  document.body.appendChild(element);
 
   // Cấu hình thông số PDF (Khổ A5)
   const opt = {
@@ -507,18 +522,22 @@ async function xuatPDF() {
     jsPDF:        { unit: 'mm', format: 'a5', orientation: 'portrait' }
   };
 
-  try {
-    await html2pdf().set(opt).from(html).save();
-    toast('Đã tải hóa đơn PDF');
-  } catch (err) {
-    toast('Lỗi khi tạo PDF');
-    console.error(err);
-  }
-  
-  btn.innerText = oldText;
-  btn.disabled = false;
+  // 2. ĐỢI 0.6 GIÂY CHO ẢNH TẢI XONG RỒI MỚI CHỤP PDF
+  setTimeout(async () => {
+    try {
+      await html2pdf().set(opt).from(element).save();
+      toast('Đã tải hóa đơn PDF');
+    } catch (err) {
+      toast('Lỗi khi tạo PDF');
+      console.error(err);
+    }
+    
+    // 3. Dọn dẹp: Xóa khung ẩn và khôi phục nút bấm
+    document.body.removeChild(element);
+    btn.innerText = oldText;
+    btn.disabled = false;
+  }, 600);
 }
-
 /* ---------- Xuất đơn dạng Text ---------- */
 function donText(){
   let s=CUA_HANG+'\n'+DIEN_THOAI+'\n━━━━━━━━━━\n';
