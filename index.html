@@ -399,6 +399,10 @@
 
 <div class="toast" id="toast"></div>
 
+<!-- Vùng hóa đơn dùng riêng cho chế độ in/PDF.
+     Quan trọng: phải tồn tại trong DOM để xuatPDF() có thể đổ nội dung vào đây. -->
+<div id="printInvoice" aria-hidden="true"></div>
+
 <script>
 /* ====== NGUỒN DỮ LIỆU: Google Sheet ====== */
 const SHEET_ID = '1fWGL_KAq4v4uPMWVqrzJt0aG_Yej9luX7tpffVHJPbM';
@@ -824,10 +828,12 @@ function xuatPDF() {
        * Cho phép giao diện khôi phục khi quay lại ứng dụng.
        */
       setTimeout(() => {
+        // Một số trình duyệt không phát afterprint/visibilitychange ổn định.
+        // Không xóa hóa đơn khi hộp thoại in vẫn đang mở.
         if (document.visibilityState === 'visible') {
           restore();
         }
-      }, 1000);
+      }, 1500);
     });
   });
 }
