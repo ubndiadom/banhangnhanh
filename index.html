@@ -4,6 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Đức Thành — Tra giá &amp; tính đơn</title>
+<!-- KẾT NỐI PWA (CÀI ĐẶT MÀN HÌNH CHÍNH) -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1E7A46">
+<link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3143/3143212.png">
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -200,9 +205,7 @@
 <div class="toast" id="toast"></div>
 
 <script>
-/* ====== NGUỒN DỮ LIỆU: Google Sheet ======
-   Thử địa chỉ NHANH (gviz, cập nhật gần như tức thì) trước;
-   nếu không được thì tự dùng địa chỉ CŨ (xuất bản lên web, trễ ~5 phút). */
+/* ====== NGUỒN DỮ LIỆU: Google Sheet ====== */
 const SHEET_ID = '1fWGL_KAq4v4uPMWVqrzJt0aG_Yej9luX7tpffVHJPbM';
 const GVIZ_URL = 'https://docs.google.com/spreadsheets/d/' + SHEET_ID + '/gviz/tq?tqx=out:csv&gid=0';
 const PUB_URL  = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTE1daL-gPDPB7j2JBBiuSsjiK4Ic0ui7ur3OUQtJxY0uEKJ6mgHHKRsdcP_5U7Q00rTL238UGoWNts/pub?output=csv';
@@ -214,6 +217,7 @@ let gio = {};
 let khach = '', tra = 0, ngay = '';
 let nhomLoc = 'all';
 let giam = 0, ghichu = '';
+let luotBan = {}; // Biến lưu số lần mua của từng món để đưa lên "Hay bán"
 
 /* Thông tin cửa hàng (in vào bản gửi khách) */
 const CUA_HANG = 'CTY TNHH MTV ĐỨC THÀNH ĐỨC CƠ';
@@ -229,8 +233,9 @@ try{
   if(s.nhomLoc) nhomLoc = s.nhomLoc;
   if(s.giam) giam = s.giam;
   if(s.ghichu) ghichu = s.ghichu;
+  if(s.luotBan) luotBan = s.luotBan;
 }catch(e){}
-function luu(){ try{ localStorage.setItem('dt_state', JSON.stringify({cheDo,gio,khach,tra,ngay,nhomLoc,giam,ghichu})); }catch(e){} }
+function luu(){ try{ localStorage.setItem('dt_state', JSON.stringify({cheDo,gio,khach,tra,ngay,nhomLoc,giam,ghichu,luotBan})); }catch(e){} }
 
 /* ---------- Tải bảng giá ---------- */
 async function taiGia(force){
@@ -270,7 +275,7 @@ function layCache(){ try{ return JSON.parse(localStorage.getItem('dt_data')||'nu
 function setStatus(t){ document.getElementById('status').textContent = t; }
 function gioPhut(d){ const p=n=>String(n).padStart(2,'0'); return p(d.getHours())+':'+p(d.getMinutes()); }
 
-/* ---------- Phân tích CSV (hỗ trợ ô có dấu phẩy trong ngoặc kép) ---------- */
+/* ---------- Phân tích CSV ---------- */
 function parseCSV(text){
   const rows=[]; let row=[], cur='', q=false;
   for(let i=0;i<text.length;i++){
@@ -336,7 +341,18 @@ function datCheDo(m){
   luu(); loc(); veDon(); veBar();
 }
 
-/* ---------- Danh sách ---------- */
+/* ---------- Danh sách & Lọc ---------- */
+function veDong(h) {
+  const q=gio[h.id]||0;
+  const dieuKhien = q>0
+    ? '<div class="stepper"><button onclick="them(\''+h.id+'\',-1)" aria-label="Bớt">−</button><input class="qtyin" inputmode="numeric" value="'+q+'" onfocus="this.select()" onchange="datSL(\''+h.id+'\',this.value)"><button onclick="them(\''+h.id+'\',1)" aria-label="Thêm">+</button></div>'
+    : '<button class="add" onclick="them(\''+h.id+'\',1)" aria-label="Thêm">+</button>';
+  return '<div class="row"><div class="info"><div class="name">'+h.ten+'</div>'
+    +'<div class="meta">'+(h.chiso?'<span class="badge">'+h.chiso+'</span>':'')+'<span class="unit">'+h.dvt+'</span></div>'
+    +'<div class="price">'+tien(giaCua(h))+' <span class="cur">đ</span></div></div>'
+    +'<div class="add-col">'+dieuKhien+'</div></div>';
+}
+
 function loc(){
   const kw=boDau(document.getElementById('q').value.trim());
   document.getElementById('clearq').classList.toggle('show',kw.length>0);
@@ -349,17 +365,22 @@ function loc(){
   });
   const list=document.getElementById('list');
   if(dsLoc.length===0){ list.innerHTML='<div class="empty">Không tìm thấy hàng nào.<br>Thử gõ ngắn hơn, ví dụ “dau trau”.</div>'; return; }
-  let html='',nhomHienTai='';
+  
+  let html='';
+
+  // HIỂN THỊ MỤC "HAY BÁN" NẾU KHÔNG CÓ TỪ KHÓA TÌM KIẾM
+  if (!kw) {
+    const hayBan = [...dsLoc].filter(h => luotBan[h.id] > 0).sort((a,b) => luotBan[b.id] - luotBan[a.id]).slice(0, 5);
+    if(hayBan.length > 0) {
+      html += '<div class="group-h">⭐ Hay bán nhất</div>';
+      hayBan.forEach(h => html += veDong(h));
+    }
+  }
+
+  let nhomHienTai='';
   dsLoc.forEach(h=>{
     if(h.nhom!==nhomHienTai){ nhomHienTai=h.nhom; html+='<div class="group-h">'+h.nhom+'</div>'; }
-    const q=gio[h.id]||0;
-    const dieuKhien = q>0
-      ? '<div class="stepper"><button onclick="them(\''+h.id+'\',-1)" aria-label="Bớt">−</button><input class="qtyin" inputmode="numeric" value="'+q+'" onfocus="this.select()" onchange="datSL(\''+h.id+'\',this.value)"><button onclick="them(\''+h.id+'\',1)" aria-label="Thêm">+</button></div>'
-      : '<button class="add" onclick="them(\''+h.id+'\',1)" aria-label="Thêm">+</button>';
-    html+='<div class="row"><div class="info"><div class="name">'+h.ten+'</div>'
-      +'<div class="meta">'+(h.chiso?'<span class="badge">'+h.chiso+'</span>':'')+'<span class="unit">'+h.dvt+'</span></div>'
-      +'<div class="price">'+tien(giaCua(h))+' <span class="cur">đ</span></div></div>'
-      +'<div class="add-col">'+dieuKhien+'</div></div>';
+    html += veDong(h);
   });
   list.innerHTML=html;
 }
@@ -377,7 +398,12 @@ function datSL(id,val){
 }
 
 /* ---------- Giỏ ---------- */
-function them(id,d){ const q=(gio[id]||0)+d; if(q<=0) delete gio[id]; else gio[id]=q; luu(); loc(); veBar(); veDon(); }
+function them(id,d){ 
+  const q=(gio[id]||0)+d; 
+  if(q<=0) delete gio[id]; else gio[id]=q; 
+  if(d>0) luotBan[id] = (luotBan[id] || 0) + 1; // Cập nhật số lượt bán để xếp hạng mục "Hay bán"
+  luu(); loc(); veBar(); veDon(); 
+}
 function tongTien(){ let t=0; for(const id in gio){ const h=HANG.find(x=>x.id===id); if(h) t+=giaCua(h)*gio[id]; } return t; }
 function soMon(){ return Object.keys(gio).filter(id=>HANG.find(x=>x.id===id)).length; }
 function veBar(){ document.getElementById('barSum').innerHTML=tien(tongTien())+' <span class="cur">đ</span>'; const n=soMon(); document.getElementById('barCnt').textContent=n; document.getElementById('btnView').disabled=n===0; }
@@ -453,13 +479,19 @@ setNhom(nhomLoc);
 loc(); veBar(); veDon(); dienFields();
 taiGia(false);
 
-/* Tự cập nhật giá khi mở lại app (không tải dồn dập: cách nhau ít nhất 15 giây) */
 let lanTaiCuoi = Date.now();
 function tuLamMoi(){ if(Date.now()-lanTaiCuoi > 15000){ lanTaiCuoi=Date.now(); taiGia(false); } }
 document.addEventListener('visibilitychange', function(){ if(!document.hidden) tuLamMoi(); });
 window.addEventListener('focus', tuLamMoi);
 const _taiGiaGoc = taiGia;
 taiGia = async function(f){ lanTaiCuoi = Date.now(); return _taiGiaGoc(f); };
+
+/* KHỞI TẠO SERVICE WORKER CHO PWA */
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(err => console.log('SW registration failed', err));
+  });
+}
 </script>
 </body>
 </html>
