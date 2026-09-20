@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Đức Thành — Tra giá &amp; tính đơn</title>
-<!-- KẾT NỐI PWA (CÀI ĐẶT MÀN HÌNH CHÍNH) -->
+<!-- KẾT NỐI PWA -->
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#1E7A46">
 <link rel="apple-touch-icon" href="logo.png">
@@ -12,6 +12,10 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<!-- THƯ VIỆN XUẤT PDF -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
 <style>
   :root{
     --paper:#F7F8F5; --card:#FFFFFF; --ink:#16231C; --muted:#5C6B60; --line:#DCE3DA;
@@ -103,11 +107,15 @@
   .pay-row .money::after{content:'đ';position:absolute;right:11px;top:50%;transform:translateY(-50%);color:var(--muted);font-weight:600;font-size:14px}
   .grand.remain .val{color:var(--ochre)}
   .grand.remain.done .val{color:var(--green);font-size:22px}
-  .foot-btns{display:flex;gap:10px}
-  .foot-btns button{flex:1;font-family:inherit;font-weight:800;font-size:16px;padding:15px;border-radius:14px;cursor:pointer;border:0}
+  
+  /* CẬP NHẬT GIAO DIỆN NÚT BẤM */
+  .foot-btns{display:grid; grid-template-columns: 1fr 1fr; gap:10px}
+  .foot-btns button{font-family:inherit;font-weight:800;font-size:15px;padding:14px;border-radius:12px;cursor:pointer;border:0}
   .b-clear{background:var(--card);border:2px solid var(--line)!important;color:var(--muted)}
-  .b-copy{background:var(--mode);color:#fff}
   .b-send{background:var(--card);border:2px solid var(--mode)!important;color:var(--mode)}
+  .b-pdf{background:var(--ochre);color:#fff}
+  .b-copy{background:var(--mode);color:#fff}
+  
   .payfull{border:1.5px solid var(--mode);background:var(--card);color:var(--mode);font-family:inherit;font-weight:800;font-size:13px;padding:11px 12px;border-radius:11px;cursor:pointer;white-space:nowrap}
   .pay-row .grp{display:flex;gap:8px;align-items:center}
   .grand.sub{margin-bottom:8px}
@@ -194,11 +202,15 @@
       <span class="lbl">Còn lại</span>
       <span class="val" id="remainVal">0 <span class="cur">đ</span></span>
     </div>
+    
+    <!-- CẬP NHẬT HÀNG NÚT BẤM -->
     <div class="foot-btns">
       <button class="b-clear" onclick="xoaDon()">Xoá đơn</button>
-      <button class="b-send" onclick="saoChep()">Sao chép</button>
-      <button class="b-copy" onclick="guiDon()">Gửi</button>
+      <button class="b-send" onclick="saoChep()">Chép Text</button>
+      <button class="b-pdf" id="btnPdf" onclick="xuatPDF()">Xuất PDF</button>
+      <button class="b-copy" onclick="guiDon()">Gửi Zalo</button>
     </div>
+
   </div>
 </div>
 
@@ -217,7 +229,7 @@ let gio = {};
 let khach = '', tra = 0, ngay = '';
 let nhomLoc = 'all';
 let giam = 0, ghichu = '';
-let luotBan = {}; // Biến lưu số lần mua của từng món để đưa lên "Hay bán"
+let luotBan = {}; 
 
 /* Thông tin cửa hàng (in vào bản gửi khách) */
 const CUA_HANG = 'CTY TNHH MTV ĐỨC THÀNH ĐỨC CƠ';
@@ -367,8 +379,6 @@ function loc(){
   if(dsLoc.length===0){ list.innerHTML='<div class="empty">Không tìm thấy hàng nào.<br>Thử gõ ngắn hơn, ví dụ “dau trau”.</div>'; return; }
   
   let html='';
-
-  // HIỂN THỊ MỤC "HAY BÁN" NẾU KHÔNG CÓ TỪ KHÓA TÌM KIẾM
   if (!kw) {
     const hayBan = [...dsLoc].filter(h => luotBan[h.id] > 0).sort((a,b) => luotBan[b.id] - luotBan[a.id]).slice(0, 5);
     if(hayBan.length > 0) {
@@ -401,7 +411,7 @@ function datSL(id,val){
 function them(id,d){ 
   const q=(gio[id]||0)+d; 
   if(q<=0) delete gio[id]; else gio[id]=q; 
-  if(d>0) luotBan[id] = (luotBan[id] || 0) + 1; // Cập nhật số lượt bán để xếp hạng mục "Hay bán"
+  if(d>0) luotBan[id] = (luotBan[id] || 0) + 1; 
   luu(); loc(); veBar(); veDon(); 
 }
 function tongTien(){ let t=0; for(const id in gio){ const h=HANG.find(x=>x.id===id); if(h) t+=giaCua(h)*gio[id]; } return t; }
@@ -431,7 +441,85 @@ function moDon(){ if(soMon()===0) return; dienFields(); document.getElementById(
 function dongDon(){ document.getElementById('scrim').classList.remove('open'); document.getElementById('sheet').classList.remove('open'); }
 function xoaDon(){ gio={}; khach=''; tra=0; giam=0; ghichu=''; ngay=nowLocal(); luu(); loc(); veBar(); veDon(); dienFields(); dongDon(); }
 
-/* ---------- Xuất đơn ---------- */
+/* ---------- Tính năng Xuất PDF ---------- */
+async function xuatPDF() {
+  const btn = document.getElementById('btnPdf');
+  const oldText = btn.innerText;
+  btn.innerText = "Đang tạo...";
+  btn.disabled = true;
+
+  // Lấy thời gian để làm tên file
+  let thoiGian = ngay || nowLocal();
+  let tenFile = 'DonHang_' + thoiGian.replace(/[-T:]/g, '') + '.pdf';
+
+  // Dựng khung HTML của Hóa đơn (Chỉ dùng để vẽ PDF, không hiện lên màn hình)
+  let html = `<div style="padding:15px; font-family:sans-serif; color:#000;">
+    <div style="display:flex; align-items:center; border-bottom:2px solid #1E7A46; padding-bottom:10px; margin-bottom:15px;">
+      <img src="logo.png" style="width:65px; height:65px; object-fit:contain; margin-right:15px;" crossorigin="anonymous">
+      <div>
+        <h2 style="margin:0; font-size:18px; color:#1E7A46;">${CUA_HANG}</h2>
+        <p style="margin:4px 0 0; font-size:13px; color:#555;">${DIEN_THOAI}</p>
+      </div>
+    </div>
+    <h3 style="text-align:center; font-size:18px; margin-bottom:15px;">HÓA ĐƠN BÁN HÀNG</h3>
+    <div style="font-size:14px; margin-bottom:15px;">
+      <p style="margin:4px 0;"><strong>Ngày:</strong> ${ngayDep(thoiGian)}</p>
+      ${khach ? `<p style="margin:4px 0;"><strong>Khách hàng:</strong> ${khach}</p>` : ''}
+    </div>
+    <table style="width:100%; border-collapse:collapse; font-size:14px; margin-bottom:15px;">
+      <tr style="border-bottom:1px solid #aaa; text-align:left;">
+        <th style="padding:8px 0;">Tên hàng</th>
+        <th style="padding:8px 0; text-align:center;">SL</th>
+        <th style="padding:8px 0; text-align:right;">Thành tiền</th>
+      </tr>`;
+
+  let stt = 0;
+  for(const id in gio){
+    const h = HANG.find(x => x.id === id);
+    if(!h) continue;
+    const g = giaCua(h), qc = gio[id];
+    html += `
+      <tr style="border-bottom:1px dashed #ddd;">
+        <td style="padding:10px 0; padding-right:5px;">${tenHang(h)}<br><small style="color:#666;">${tien(g)} đ / ${h.dvt}</small></td>
+        <td style="padding:10px 0; text-align:center; font-weight:bold;">${qc}</td>
+        <td style="padding:10px 0; text-align:right; font-weight:bold;">${tien(g * qc)} đ</td>
+      </tr>`;
+  }
+
+  html += `</table>
+    <div style="font-size:15px; text-align:right; margin-bottom:20px;">
+      <p style="margin:6px 0;">Tổng cộng: <strong>${tien(tongTien())} đ</strong></p>
+      ${giam > 0 ? `<p style="margin:6px 0;">Giảm giá: <strong>${tien(giam)} đ</strong></p>` : ''}
+      ${giam > 0 ? `<p style="margin:6px 0;">Thành tiền: <strong>${tien(thanhTien())} đ</strong></p>` : ''}
+      ${tra > 0 ? `<p style="margin:6px 0;">Đã trả: <strong>${tien(tra)} đ</strong></p>` : ''}
+      <p style="margin:6px 0; font-size:17px; color:#B23B2E;">CÒN LẠI: <strong>${tra >= thanhTien() ? '0 đ' : tien(thanhTien() - tra) + ' đ'}</strong></p>
+    </div>
+    ${ghichu ? `<p style="font-size:14px; font-style:italic;">Ghi chú: ${ghichu}</p>` : ''}
+    <p style="text-align:center; font-size:13px; margin-top:40px; font-weight:bold; color:#555;">Cảm ơn Quý khách!</p>
+  </div>`;
+
+  // Cấu hình thông số PDF (Khổ A5)
+  const opt = {
+    margin:       [10, 10, 10, 10],
+    filename:     tenFile,
+    image:        { type: 'jpeg', quality: 0.98 },
+    html2canvas:  { scale: 2, useCORS: true },
+    jsPDF:        { unit: 'mm', format: 'a5', orientation: 'portrait' }
+  };
+
+  try {
+    await html2pdf().set(opt).from(html).save();
+    toast('Đã tải hóa đơn PDF');
+  } catch (err) {
+    toast('Lỗi khi tạo PDF');
+    console.error(err);
+  }
+  
+  btn.innerText = oldText;
+  btn.disabled = false;
+}
+
+/* ---------- Xuất đơn dạng Text ---------- */
 function donText(){
   let s=CUA_HANG+'\n'+DIEN_THOAI+'\n━━━━━━━━━━\n';
   if(ngay) s+='Ngày: '+ngayDep(ngay)+'\n';
@@ -464,7 +552,7 @@ async function guiDon(){
   try{ await navigator.clipboard.writeText(txt); toast('Máy không có nút chia sẻ — đã sao chép, mở Zalo dán vào'); }catch(e){ toast('Không gửi được'); }
 }
 async function saoChep(){
-  try{ await navigator.clipboard.writeText(donText()); toast('Đã sao chép đơn'); }
+  try{ await navigator.clipboard.writeText(donText()); toast('Đã chép text đơn'); }
   catch(e){ toast('Không sao chép được'); }
 }
 let toTimer; function toast(m){ const t=document.getElementById('toast'); t.textContent=m; t.classList.add('show'); clearTimeout(toTimer); toTimer=setTimeout(()=>t.classList.remove('show'),1800); }
