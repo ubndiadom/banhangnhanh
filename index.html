@@ -7,6 +7,7 @@
 <!-- KẾT NỐI PWA -->
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#1E7A46">
+<meta name="app-version" content="2026.09.26.3">
 <link rel="apple-touch-icon" href="logo.png">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -73,15 +74,22 @@
 
   .scrim{position:fixed;inset:0;background:rgba(10,20,14,.45);z-index:50;display:none}
   .scrim.open{display:block}
-  .sheet{position:fixed;left:0;right:0;bottom:0;z-index:60;max-width:640px;margin:0 auto;background:var(--paper);border-radius:20px 20px 0 0;transform:translateY(100%);transition:transform .22s ease;height:94vh;height:94dvh;display:flex;flex-direction:column}
-  .sheet.open{transform:translateY(0)}
-  .sheet-hd{display:flex;align-items:center;justify-content:space-between;padding:16px 16px 8px}
+  .sheet{position:fixed;left:0;right:0;bottom:0;z-index:60;max-width:640px;margin:0 auto;background:var(--paper);border-radius:20px 20px 0 0;transform:translateY(100%);visibility:hidden;max-height:88vh;max-height:88dvh;display:flex;flex-direction:column}
+  .sheet.open{transform:translateY(0);visibility:visible}
+  .sheet-hd{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:12px 16px 8px;flex:none}
+  .sheet-hd h2{flex:1}
+  .jump-pay,.new-order{font-family:inherit;font-weight:700;font-size:13px;border:1px solid var(--line);background:var(--card);color:var(--mode);border-radius:10px;padding:10px;cursor:pointer;min-height:42px}
+  .new-order{margin-top:6px;padding:4px 10px;min-height:32px}
+  body.order-open{overflow:hidden}
+  .customer-info{margin:4px 0 12px;border:1px solid var(--line);border-radius:12px;background:var(--card);padding:10px 12px}
+  .customer-info summary{font-weight:700;font-size:14px;cursor:pointer;padding:3px 0}
+  .customer-info .don-info{margin-top:12px}
   .sheet-hd h2{font-size:20px;font-weight:800}
   .sheet-hd .x{border:0;background:var(--line);color:var(--ink);width:40px;height:40px;border-radius:50%;font-size:22px;cursor:pointer}
   .sheet-scroll{overflow:auto;min-height:0;flex:1;padding:4px 12px 16px;overscroll-behavior:contain}
   .don-info{display:flex;flex-direction:column;gap:10px;margin:4px 0 12px}
   .don-info label{display:flex;flex-direction:column;gap:5px;font-size:13px;font-weight:700;color:var(--muted)}
-  .don-info input{font-family:inherit;font-size:18px;font-weight:600;padding:12px;border:2px solid var(--line);border-radius:12px;background:var(--card);color:var(--ink)}
+  .don-info input{font-family:inherit;font-size:18px;font-weight:600;padding:12px;border:2px solid var(--line);border-radius:12px;background:var(--card);color:var(--ink);width:100%;min-width:0}
   .don-info input:focus{outline:none;border-color:var(--mode)}
   .line{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:8px}
   .line-top{display:flex;justify-content:space-between;gap:10px}
@@ -125,6 +133,43 @@
   .qtyin:focus{outline:none;border-color:var(--mode)}
   .toast{position:fixed;left:50%;bottom:150px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:var(--paper);padding:12px 18px;border-radius:12px;font-weight:600;font-size:15px;z-index:80;opacity:0;transition:.25s;pointer-events:none}
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .resume-dialog{border:0;border-radius:18px;margin:auto;width:calc(100% - 32px);max-width:380px;padding:22px;color:var(--ink);background:var(--card);font-family:inherit;box-shadow:var(--shadow)}
+  .resume-dialog::backdrop{background:rgba(10,20,14,.55)}
+  .resume-dialog h2{font-size:20px;margin-bottom:10px}
+  .resume-dialog p{font-size:14px;line-height:1.6;margin-bottom:16px}
+  .resume-dialog button{display:block;width:100%;min-height:46px;margin-top:10px;border-radius:12px;border:1px solid var(--line);font:inherit;font-weight:700;cursor:pointer;background:var(--card);color:var(--ink)}
+  .resume-dialog .start-new{background:var(--mode);color:white;border-color:var(--mode)}
+  .line-name,.name{overflow-wrap:anywhere;min-width:0}
+  .line-top>div{min-width:0}
+  .line-bot{gap:8px;flex-wrap:wrap}
+  .grand{gap:8px;flex-wrap:wrap}
+  .pay-row .grp{min-width:0}
+  @media screen and (max-width:600px){
+    .sheet{height:calc(100vh - 8px);height:calc(100dvh - max(8px, env(safe-area-inset-top)));max-height:none}
+    .sheet-hd{padding:8px 12px}
+    .sheet-hd h2{font-size:18px}
+    .sheet-scroll{padding-top:0}
+    .sheet-summary .grand .val{font-size:26px}
+    .pay-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,190px);gap:6px}
+    .pay-row label{font-size:14px}
+    .pay-row .money{display:block;min-width:0}
+    .pay-row input{width:100%;min-width:0;font-size:17px;padding:10px 25px 10px 6px}
+    .pay-row .grp{gap:5px}
+    .pay-row .grp .money{flex:1}
+    .payfull{padding:10px 6px;font-size:12px;flex:none}
+    .foot-btns{grid-template-columns:repeat(4,minmax(0,1fr));gap:5px}
+    .foot-btns button{font-size:12px;min-height:44px;padding:8px 2px}
+    .brand{font-size:19px}
+    .toggle button{padding:9px 10px;font-size:14px}
+    .bar{padding:8px 12px calc(8px + env(safe-area-inset-bottom))}
+    .bar-tot .sum{font-size:25px}
+    .btn-view{padding:13px 12px;font-size:15px}
+    .row{gap:8px;padding:10px}
+    .row .name{font-size:17px}
+    .row .stepper{gap:3px}
+    .row .stepper button{width:36px;height:42px}
+    .row .qtyin{width:42px;font-size:18px}
+  }
   /* =========================================================
      IN HÓA ĐƠN A5 - NATIVE PRINT
      ========================================================= */
@@ -138,6 +183,8 @@
 
   @media print{
     html,body{
+      overflow:visible !important;
+      height:auto !important;
       width:148mm !important;
       min-width:148mm !important;
       max-width:148mm !important;
@@ -380,25 +427,30 @@
     <div class="bar-tot">
       <div class="lbl">Tổng đơn</div>
       <div class="sum" id="barSum">0 <span class="cur">đ</span></div>
+      <button class="new-order" onclick="yeuCauDonMoi()">＋ Đơn mới</button>
     </div>
     <button class="btn-view" id="btnView" onclick="moDon()" disabled>Xem đơn<span class="cnt" id="barCnt">0</span></button>
   </div>
 </div>
 
 <div class="scrim" id="scrim" onclick="dongDon()"></div>
-<div class="sheet" id="sheet" role="dialog" aria-label="Đơn hàng">
+<div class="sheet" id="sheet" role="dialog" aria-label="Đơn hàng" aria-modal="true" aria-hidden="true" inert>
   <div class="sheet-hd">
     <h2>Đơn hàng</h2>
+    <button class="jump-pay" onclick="xemThanhToan()">Thanh toán ↓</button>
     <button class="x" onclick="dongDon()" aria-label="Đóng">×</button>
   </div>
   <div class="sheet-scroll">
+    <details class="customer-info" id="customerInfo">
+    <summary>Thông tin khách hàng / ngày / ghi chú</summary>
     <div class="don-info">
       <label>Ngày giờ<input type="datetime-local" id="fNgay" onchange="luuField()"></label>
       <label>Tên khách hàng<input type="text" id="fKhach" placeholder="Nhập tên khách (nếu cần)" oninput="luuField()"></label>
       <label>Ghi chú<input type="text" id="fGhiChu" placeholder="vd: giao chiều nay, nợ tới mùa…" oninput="luuField()"></label>
     </div>
+    </details>
     <div id="sheetBody"></div>
-    <div class="sheet-summary">
+    <div class="sheet-summary" id="paymentSummary">
     <div class="grand">
       <span class="lbl">Tổng cộng</span>
       <span class="val" id="grandVal">0 <span class="cur">đ</span></span>
@@ -424,7 +476,7 @@
   <div class="sheet-foot">
     <!-- CẬP NHẬT HÀNG NÚT BẤM -->
     <div class="foot-btns">
-      <button class="b-clear" onclick="xoaDon()">Xoá đơn</button>
+      <button class="b-clear" onclick="yeuCauDonMoi()">Đơn mới</button>
       <button class="b-send" onclick="saoChep()">Chép Text</button>
       <button class="b-pdf" id="btnPdf" onclick="xuatPDF()">Xuất PDF</button>
       <button class="b-copy" onclick="guiDon()">Gửi Zalo</button>
@@ -434,6 +486,12 @@
 </div>
 
 <div class="toast" id="toast"></div>
+<dialog class="resume-dialog" id="resumeDialog" aria-labelledby="resumeTitle">
+  <h2 id="resumeTitle">Bắt đầu đơn mới?</h2>
+  <p id="resumeMessage"></p>
+  <button class="start-new" onclick="chonDonMoi()" autofocus>Tạo đơn mới</button>
+  <button onclick="tiepTucDon()">Tiếp tục đơn đang nhập</button>
+</dialog>
 
 <!-- Vùng hóa đơn dùng riêng cho chế độ in/PDF.
      Quan trọng: phải tồn tại trong DOM để xuatPDF() có thể đổ nội dung vào đây. -->
@@ -453,6 +511,10 @@ let khach = '', tra = 0, ngay = '';
 let nhomLoc = 'all';
 let giam = 0, ghichu = '';
 let luotBan = {}; 
+let dangXuatDon = false;
+let daAnTrang = false;
+let boQuaLanQuayLai = false;
+let hetHanBoQua = 0;
 
 /* Thông tin cửa hàng (in vào bản gửi khách) */
 const CUA_HANG = 'CTY TNHH MTV ĐỨC THÀNH ĐỨC CƠ';
@@ -468,14 +530,16 @@ const VIETQR_BANK_BIN = '970405';
 
 try{
   const s = JSON.parse(localStorage.getItem('dt_state')||'{}');
-  if(s.cheDo) cheDo = s.cheDo;
-  if(s.nhomLoc) nhomLoc = s.nhomLoc;
+  if(s.cheDo==='tm'||s.cheDo==='no') cheDo = s.cheDo;
+  if(['all','Phân bón','Thuốc BVTV'].includes(s.nhomLoc)) nhomLoc = s.nhomLoc;
   if(s.luotBan) luotBan = s.luotBan;
 }catch(e){}
 function luu(){ try{ localStorage.setItem('dt_state', JSON.stringify({cheDo,nhomLoc,luotBan})); }catch(e){} }
 
 /* ---------- Tải bảng giá ---------- */
 async function taiGia(force){
+  // Giữ nguyên bảng giá và mã mặt hàng trong suốt một đơn đang nhập.
+  if(soMon()>0){ if(force) toast('Tạo đơn mới trước khi cập nhật bảng giá'); return; }
   setStatus('Đang tải bảng giá…');
   let items = null;
   for(let i=0;i<SOURCES.length;i++){
@@ -489,6 +553,7 @@ async function taiGia(force){
       if(parsed.length){ items = parsed; break; }
     }catch(e){ /* thử nguồn kế tiếp */ }
   }
+  if(soMon()>0){ setStatus('Đang nhập đơn · giữ bảng giá hiện tại'); return; }
   if(items){
     HANG = items;
     const now = new Date();
@@ -566,7 +631,7 @@ function capNhatConLai(){
   ttRow.style.display = giam>0 ? 'flex' : 'none';
   document.getElementById('thanhTienVal').innerHTML=tien(tt)+' <span class="cur">đ</span>';
   const row=document.getElementById('remainRow'),val=document.getElementById('remainVal');
-  if(tt>0&&tra>=tt){row.classList.add('done');val.innerHTML='Đã đủ';}else{row.classList.remove('done');val.innerHTML=tien(tt-tra)+' <span class="cur">đ</span>';}
+  if(tra>=tt){row.classList.add('done');val.innerHTML='0 <span class="cur">đ</span>'+(tt>0?' — Đã đủ':'');}else{row.classList.remove('done');val.innerHTML=tien(Math.max(0,tt-tra))+' <span class="cur">đ</span>';}
 }
 function dienFields(){ if(!ngay) ngay=nowLocal(); document.getElementById('fNgay').value=ngay; document.getElementById('fKhach').value=khach||''; document.getElementById('fGhiChu').value=ghichu||''; document.getElementById('fTra').value=tra?tra.toLocaleString('vi-VN'):''; document.getElementById('fGiam').value=giam?giam.toLocaleString('vi-VN'):''; capNhatConLai(); }
 
@@ -582,9 +647,9 @@ function datCheDo(m){
 function veDong(h) {
   const q=gio[h.id]||0;
   const dieuKhien = q>0
-    ? '<div class="stepper"><button onclick="them(\''+h.id+'\',-1)" aria-label="Bớt">−</button><input class="qtyin" inputmode="numeric" value="'+q+'" onfocus="this.select()" onchange="datSL(\''+h.id+'\',this.value)"><button onclick="them(\''+h.id+'\',1)" aria-label="Thêm">+</button></div>'
+    ? '<div class="stepper"><button onclick="them(\''+h.id+'\',-1)" aria-label="Bớt">−</button><input class="qtyin" inputmode="numeric" value="'+q+'" onfocus="this.select()" oninput="datSL(\''+h.id+'\',this.value)"><button onclick="them(\''+h.id+'\',1)" aria-label="Thêm">+</button></div>'
     : '<button class="add" onclick="them(\''+h.id+'\',1)" aria-label="Thêm">+</button>';
-  return '<div class="row"><div class="info"><div class="name">'+h.ten+'</div>'
+  return '<div class="row" data-product="'+h.id+'"><div class="info"><div class="name">'+h.ten+'</div>'
     +'<div class="meta">'+(h.chiso?'<span class="badge">'+h.chiso+'</span>':'')+'<span class="unit">'+h.dvt+'</span></div>'
     +'<div class="price">'+tien(giaCua(h))+' <span class="cur">đ</span></div></div>'
     +'<div class="add-col">'+dieuKhien+'</div></div>';
@@ -629,7 +694,18 @@ function setNhom(v){
 function datSL(id,val){
   const n=parseInt((val||'').replace(/[^\d]/g,''))||0;
   if(n<=0) delete gio[id]; else gio[id]=n;
-  luu(); loc(); veBar(); veDon();
+  luu(); veBar();
+  // Cập nhật số tiền tại chỗ để bàn phím và nút +/- không bị thay DOM khi nhập.
+  const h=HANG.find(x=>x.id===id);
+  document.querySelectorAll('[data-product="'+id+'"]').forEach(row=>{
+    const input=row.querySelector('.qtyin');
+    if(input && input!==document.activeElement) input.value=n;
+    const sub=row.querySelector('.line-sub'),total=row.querySelector('.line-total');
+    if(h && sub) sub.textContent=tien(giaCua(h))+' đ × '+n+' '+h.dvt;
+    if(h && total) total.textContent=tien(giaCua(h)*n)+' đ';
+  });
+  document.getElementById('grandVal').innerHTML=tien(tongTien())+' <span class="cur">đ</span>';
+  capNhatConLai();
 }
 
 /* ---------- Giỏ ---------- */
@@ -648,10 +724,10 @@ function veDon(){
   else{
     let html='';
     ids.forEach(id=>{ const h=HANG.find(x=>x.id===id); if(!h) return; const g=giaCua(h),q=gio[id];
-      html+='<div class="line"><div class="line-top"><div><div class="line-name">'+tenHang(h)+'</div>'
+      html+='<div class="line" data-product="'+id+'"><div class="line-top"><div><div class="line-name">'+tenHang(h)+'</div>'
         +'<div class="line-sub">'+tien(g)+' đ × '+q+' '+h.dvt+'</div></div>'
         +'<button class="del" onclick="xoaMon(\''+id+'\')">Xoá</button></div>'
-        +'<div class="line-bot"><div class="stepper"><button onclick="them(\''+id+'\',-1)">−</button><input class="qtyin" inputmode="numeric" value="'+q+'" onfocus="this.select()" onchange="datSL(\''+id+'\',this.value)"><button onclick="them(\''+id+'\',1)">+</button></div>'
+        +'<div class="line-bot"><div class="stepper"><button onclick="them(\''+id+'\',-1)">−</button><input class="qtyin" inputmode="numeric" value="'+q+'" onfocus="this.select()" oninput="datSL(\''+id+'\',this.value)"><button onclick="them(\''+id+'\',1)">+</button></div>'
         +'<div class="line-total">'+tien(g*q)+' đ</div></div></div>';
     });
     body.innerHTML=html;
@@ -662,22 +738,56 @@ function veDon(){
 function xoaMon(id){ delete gio[id]; luu(); loc(); veBar(); veDon(); }
 
 /* ---------- Sheet ---------- */
-function moDon(){ if(soMon()===0) return; dienFields(); document.getElementById('scrim').classList.add('open'); document.getElementById('sheet').classList.add('open'); }
-function dongDon(){ document.getElementById('scrim').classList.remove('open'); document.getElementById('sheet').classList.remove('open'); }
-function xoaDon(){ gio={}; khach=''; tra=0; giam=0; ghichu=''; ngay=nowLocal(); luu(); loc(); veBar(); veDon(); dienFields(); dongDon(); }
-// Trình duyệt có thể khôi phục nguyên tab từ bộ nhớ mà không chạy lại script.
-// Xóa dữ liệu đơn khi trang rời phiên; vẫn giữ bảng giá và tùy chọn đã lưu.
-function donMoiKhiRoiTrang(){ gio={}; khach=''; tra=0; giam=0; ghichu=''; ngay=''; }
-window.addEventListener('pagehide', donMoiKhiRoiTrang);
-window.addEventListener('pageshow', function(e){
-  if(!e.persisted) return;
-  donMoiKhiRoiTrang();
+function moDon(){
+  if(soMon()===0) return;
+  veDon(); dienFields();
+  const sheet=document.getElementById('sheet');
+  sheet.inert=false; sheet.setAttribute('aria-hidden','false');
+  document.getElementById('scrim').classList.add('open');
+  sheet.classList.add('open'); document.body.classList.add('order-open');
+  sheet.querySelector('.sheet-scroll').scrollTop=0;
+  sheet.querySelector('.x').focus({preventScroll:true});
+}
+function dongDon(){
+  const sheet=document.getElementById('sheet');
+  if(sheet.contains(document.activeElement)) document.getElementById('btnView').focus({preventScroll:true});
+  sheet.classList.remove('open'); sheet.setAttribute('aria-hidden','true'); sheet.inert=true;
+  document.getElementById('scrim').classList.remove('open');
+  document.body.classList.remove('order-open');
+}
+function xemThanhToan(){ document.getElementById('paymentSummary').scrollIntoView({block:'start',behavior:'smooth'}); }
+function xoaDon(){
+  gio={}; khach=''; tra=0; giam=0; ghichu=''; ngay=nowLocal();
   document.getElementById('q').value='';
-  dongDon(); dienFields(); loc(); veBar(); veDon();
+  document.getElementById('customerInfo').open=window.matchMedia('(min-width:601px)').matches;
+  dongDon(); luu(); loc(); veBar(); veDon(); dienFields();
+}
+function yeuCauDonMoi(){
+  if(!soMon()){ xoaDon(); toast('Đã sẵn sàng nhập đơn mới'); return; }
+  const dialog=document.getElementById('resumeDialog');
+  document.getElementById('resumeMessage').textContent='Đang có '+soMon()+' mặt hàng, tổng '+tien(thanhTien())+' đ. Chọn tạo đơn mới để xóa đơn này, hoặc tiếp tục nhập.';
+  if(!dialog.open) dialog.showModal();
+}
+function chonDonMoi(){ document.getElementById('resumeDialog').close(); xoaDon(); toast('Đã tạo đơn mới'); }
+function tiepTucDon(){ document.getElementById('resumeDialog').close(); }
+// Không có sự kiện đáng tin cậy để phân biệt đóng trình duyệt và chuyển ứng dụng.
+// Khi phiên cũ còn trong bộ nhớ, yêu cầu chọn đơn trước khi nhập tiếp.
+function kiemTraDonKhiQuayLai(){
+  if(dangXuatDon) return;
+  if(boQuaLanQuayLai && Date.now()<hetHanBoQua){ boQuaLanQuayLai=false; return; }
+  boQuaLanQuayLai=false;
+  if(soMon()) yeuCauDonMoi();
+}
+window.addEventListener('pageshow', function(e){ if(e.persisted) kiemTraDonKhiQuayLai(); });
+document.addEventListener('visibilitychange', function(){
+  if(document.hidden){ daAnTrang=true; return; }
+  if(daAnTrang){ daAnTrang=false; kiemTraDonKhiQuayLai(); }
 });
 
 /* ---------- Tính năng Xuất PDF ---------- */
 function xuatPDF() {
+
+  if(dangXuatDon) return;
 
   const btn = document.getElementById('btnPdf');
   const invoice = document.getElementById('printInvoice');
@@ -695,6 +805,7 @@ function xuatPDF() {
     toast('Đơn hàng chưa có sản phẩm');
     return;
   }
+  dangXuatDon = true;
 
   const thoiGian = ngay || nowLocal();
 
@@ -883,6 +994,7 @@ function xuatPDF() {
   const restore = () => {
     if (restored) return;
     restored = true;
+    dangXuatDon = false;
 
     document.title = oldTitle;
     invoice.innerHTML = '';
@@ -893,6 +1005,7 @@ function xuatPDF() {
     }
 
     window.removeEventListener('afterprint', restore);
+    document.removeEventListener('visibilitychange', onVisibilityBack);
   };
 
   window.addEventListener('afterprint', restore, { once: true });
@@ -900,10 +1013,9 @@ function xuatPDF() {
   const onVisibilityBack = () => {
     if (printStarted && document.visibilityState === 'visible') {
       restore();
-      window.removeEventListener('visibilitychange', onVisibilityBack);
     }
   };
-  window.addEventListener('visibilitychange', onVisibilityBack);
+  document.addEventListener('visibilitychange', onVisibilityBack);
 
   // Chờ font Be Vietnam Pro tải xong trước khi chụp nội dung để in PDF.
   // Nếu Google Fonts không tải được, trình duyệt vẫn dùng Arial/Segoe UI/Tahoma.
@@ -987,7 +1099,12 @@ function donText(){
 }
 async function guiDon(){
   const txt=donText();
-  if(navigator.share){ try{ await navigator.share({text:txt}); return; }catch(e){ if(e && e.name==='AbortError') return; } }
+  if(navigator.share){
+    dangXuatDon=true;
+    try{ await navigator.share({text:txt}); return; }
+    catch(e){ if(e && e.name==='AbortError') return; }
+    finally{ dangXuatDon=false; boQuaLanQuayLai=true; hetHanBoQua=Date.now()+1500; }
+  }
   try{ await navigator.clipboard.writeText(txt); toast('Máy không có nút chia sẻ — đã sao chép, mở Zalo dán vào'); }catch(e){ toast('Không gửi được'); }
 }
 async function saoChep(){
@@ -1001,6 +1118,7 @@ function xoaTim(){ document.getElementById('q').value=''; loc(); document.getEle
 document.body.setAttribute('data-che-do',cheDo);
 document.getElementById('btn-tm').classList.toggle('on',cheDo==='tm');
 document.getElementById('btn-no').classList.toggle('on',cheDo==='no');
+document.getElementById('customerInfo').open=window.matchMedia('(min-width:601px)').matches;
 (function(){ const c=layCache(); if(c&&c.items&&c.items.length){ HANG=c.items; setStatus('Giá lưu lúc '+gioPhut(new Date(c.at))+' · đang cập nhật…'); } })();
 setNhom(nhomLoc);
 loc(); veBar(); veDon(); dienFields();
@@ -1016,7 +1134,9 @@ taiGia = async function(f){ lanTaiCuoi = Date.now(); return _taiGiaGoc(f); };
 /* KHỞI TẠO SERVICE WORKER CHO PWA */
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js').catch(err => console.log('SW registration failed', err));
+    navigator.serviceWorker.register('./sw.js', {updateViaCache:'none'})
+      .then(reg => reg.update().catch(() => {}))
+      .catch(err => console.log('SW registration failed', err));
   });
 }
 </script>
