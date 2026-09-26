@@ -665,6 +665,16 @@ function xoaMon(id){ delete gio[id]; luu(); loc(); veBar(); veDon(); }
 function moDon(){ if(soMon()===0) return; dienFields(); document.getElementById('scrim').classList.add('open'); document.getElementById('sheet').classList.add('open'); }
 function dongDon(){ document.getElementById('scrim').classList.remove('open'); document.getElementById('sheet').classList.remove('open'); }
 function xoaDon(){ gio={}; khach=''; tra=0; giam=0; ghichu=''; ngay=nowLocal(); luu(); loc(); veBar(); veDon(); dienFields(); dongDon(); }
+// Trình duyệt có thể khôi phục nguyên tab từ bộ nhớ mà không chạy lại script.
+// Xóa dữ liệu đơn khi trang rời phiên; vẫn giữ bảng giá và tùy chọn đã lưu.
+function donMoiKhiRoiTrang(){ gio={}; khach=''; tra=0; giam=0; ghichu=''; ngay=''; }
+window.addEventListener('pagehide', donMoiKhiRoiTrang);
+window.addEventListener('pageshow', function(e){
+  if(!e.persisted) return;
+  donMoiKhiRoiTrang();
+  document.getElementById('q').value='';
+  dongDon(); dienFields(); loc(); veBar(); veDon();
+});
 
 /* ---------- Tính năng Xuất PDF ---------- */
 function xuatPDF() {
