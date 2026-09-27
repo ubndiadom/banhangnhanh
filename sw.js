@@ -1,5 +1,5 @@
 // Tăng phiên bản khi thay đổi các tệp của ứng dụng.
-const CACHE_NAME = 'ducthanh-v20260927-1';
+const CACHE_NAME = 'ducthanh-v20260927-2';
 const APP_HOME = new URL('./', self.location.href).href;
 const APP_INDEX = new URL('./index.html', self.location.href).href;
 

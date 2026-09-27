@@ -7,7 +7,7 @@
 <!-- KẾT NỐI PWA -->
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#176B3A">
-<meta name="app-version" content="2026.09.27.1">
+<meta name="app-version" content="2026.09.27.2">
 <link rel="apple-touch-icon" href="logo.png">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -678,7 +678,6 @@ let gio = {};
 let khach = '', tra = 0, ngay = '';
 let nhomLoc = 'all';
 let giam = 0, ghichu = '';
-let luotBan = {}; 
 let dangXuatDon = false;
 let daAnTrang = false;
 let boQuaLanQuayLai = false;
@@ -700,9 +699,8 @@ try{
   const s = JSON.parse(localStorage.getItem('dt_state')||'{}');
   if(s.cheDo==='tm'||s.cheDo==='no') cheDo = s.cheDo;
   if(['all','Phân bón','Thuốc BVTV'].includes(s.nhomLoc)) nhomLoc = s.nhomLoc;
-  if(s.luotBan) luotBan = s.luotBan;
 }catch(e){}
-function luu(){ try{ localStorage.setItem('dt_state', JSON.stringify({cheDo,nhomLoc,luotBan})); }catch(e){} }
+function luu(){ try{ localStorage.setItem('dt_state', JSON.stringify({cheDo,nhomLoc})); }catch(e){} }
 
 /* ---------- Tải bảng giá ---------- */
 async function taiGia(force){
@@ -837,14 +835,6 @@ function loc(){
   if(dsLoc.length===0){ list.innerHTML='<div class="empty">Không tìm thấy hàng nào.<br>Thử gõ ngắn hơn, ví dụ “dau trau”.</div>'; return; }
   
   let html='';
-  if (!kw) {
-    const hayBan = [...dsLoc].filter(h => luotBan[h.id] > 0).sort((a,b) => luotBan[b.id] - luotBan[a.id]).slice(0, 5);
-    if(hayBan.length > 0) {
-      html += '<div class="group-h">⭐ Hay bán nhất</div>';
-      hayBan.forEach(h => html += veDong(h));
-    }
-  }
-
   let nhomHienTai='';
   dsLoc.forEach(h=>{
     if(h.nhom!==nhomHienTai){ nhomHienTai=h.nhom; html+='<div class="group-h">'+h.nhom+'</div>'; }
@@ -880,7 +870,6 @@ function datSL(id,val){
 function them(id,d){ 
   const q=(gio[id]||0)+d; 
   if(q<=0) delete gio[id]; else gio[id]=q; 
-  if(d>0) luotBan[id] = (luotBan[id] || 0) + 1; 
   luu(); loc(); veBar(); veDon(); 
 }
 function tongTien(){ let t=0; for(const id in gio){ const h=HANG.find(x=>x.id===id); if(h) t+=giaCua(h)*gio[id]; } return t; }
