@@ -6,13 +6,13 @@
 <title>Đức Thành — Tra giá &amp; tính đơn</title>
 <!-- KẾT NỐI PWA -->
 <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#1E7A46">
-<meta name="app-version" content="2026.09.26.3">
+<meta name="theme-color" content="#176B3A">
+<meta name="app-version" content="2026.09.27.1">
 <link rel="apple-touch-icon" href="logo.png">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root{
     --paper:#F7F8F5; --card:#FFFFFF; --ink:#16231C; --muted:#5C6B60; --line:#DCE3DA;
@@ -170,6 +170,174 @@
     .row .stepper button{width:36px;height:42px}
     .row .qtyin{width:42px;font-size:18px}
   }
+  /* =========================================================
+     GIAO DIỆN PRO 2026.09.27
+     Mục tiêu: POS tối giản, trung tính, mật độ thông tin cao.
+     Chỉ ghi đè phần trình bày; không thay đổi logic đơn hàng.
+     ========================================================= */
+  :root{
+    --paper:#F5F6F7;
+    --card:#FFFFFF;
+    --ink:#1F2328;
+    --muted:#667085;
+    --line:#D9DEE5;
+    --green:#176B3A;
+    --green-dark:#125830;
+    --green-soft:#EDF5F0;
+    --ochre:#A86608;
+    --ochre-soft:#FFF5E5;
+    --danger:#C9362B;
+    --shadow:0 8px 24px rgba(31,35,40,.08);
+    --mode:var(--green);
+    --mode-soft:var(--green-soft);
+  }
+  html,body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+    font-feature-settings:"tnum" 1,"cv02" 1,"cv03" 1;
+  }
+  body{max-width:760px;line-height:1.42;padding-bottom:104px}
+  body[data-che-do="no"]{--mode:var(--green);--mode-soft:var(--green-soft)}
+
+  header{background:rgba(245,246,247,.96);backdrop-filter:blur(12px);padding:12px 16px 8px;border-bottom:1px solid var(--line)}
+  .brand{font-size:20px;font-weight:700;letter-spacing:-.35px}
+  .brand small{font-size:11px;font-weight:500;letter-spacing:.01em;color:var(--muted);margin-top:1px}
+  .toggle{border:1px solid var(--line);border-radius:8px;padding:2px;background:#ECEFF2}
+  .toggle button{font-size:13px;font-weight:600;padding:7px 11px;border-radius:6px;color:#5D6672}
+  .toggle button.on{background:var(--card);color:var(--ink);box-shadow:0 1px 2px rgba(31,35,40,.09)}
+
+  .search-wrap{margin-top:9px}
+  #q{height:46px;font-size:16px;font-weight:400;padding:10px 42px 10px 13px;border:1px solid #C9CFD7;border-radius:8px;box-shadow:0 1px 2px rgba(31,35,40,.03)}
+  #q:focus{border-color:var(--green);box-shadow:0 0 0 3px rgba(23,107,58,.10)}
+  #q::placeholder{font-weight:400;color:#8A929D}
+  .clear-q{right:7px;width:30px;height:30px;background:transparent;color:#737C87;border-radius:6px}
+  .statusbar{font-size:11px;margin-top:6px}
+  .refresh{border:0;background:transparent;padding:5px 2px;border-radius:4px;font-size:11px;font-weight:600;color:#5D6672}
+  .refresh:hover{color:var(--green)}
+
+  .filters{gap:0;margin-top:8px;border-bottom:1px solid var(--line)}
+  .chip{flex:0 0 auto;border:0;border-bottom:2px solid transparent;background:transparent;color:#69727D;font-size:12px;font-weight:600;padding:9px 12px 8px;border-radius:0}
+  .chip.on{background:transparent;color:var(--green);border-color:var(--green)}
+
+  main{padding:4px 16px 0;background:var(--card)}
+  .group-h{font-size:11px;font-weight:600;letter-spacing:.055em;text-transform:uppercase;color:#7A838E;padding:15px 2px 5px}
+  .row{gap:12px;background:transparent;border:0;border-bottom:1px solid #E6E9ED;border-radius:0;padding:12px 2px;margin:0;box-shadow:none;min-height:82px}
+  .row:last-child{border-bottom:0}
+  .name{font-size:16px;font-weight:600;line-height:1.32;letter-spacing:-.1px}
+  .meta{gap:7px;margin-top:4px}
+  .badge{font-size:11px;font-weight:600;color:var(--green-dark);background:var(--green-soft);padding:2px 6px;border-radius:4px}
+  body[data-che-do="no"] .badge{color:#8A5500;background:var(--ochre-soft)}
+  .unit{font-size:12px;color:#7A838E}
+  .price{font-size:17px;font-weight:650;margin-top:5px;letter-spacing:-.1px;font-variant-numeric:tabular-nums}
+  .price .cur{font-size:12px;font-weight:500}
+  .add{width:42px;height:42px;border-radius:8px;font-size:22px;font-weight:500;background:var(--green);box-shadow:0 1px 2px rgba(0,0,0,.07)}
+  .stepper{gap:4px}
+  .stepper button{width:38px;height:38px;border:1px solid #BCC4CD;border-radius:7px;font-size:20px;font-weight:500;color:var(--green);background:#fff}
+  .stepper .qty{font-size:18px;font-weight:600}
+  .qtyin{width:44px;font-size:17px;font-weight:600;border:1px solid #C9CFD7;border-radius:7px;padding:6px 2px;font-variant-numeric:tabular-nums}
+
+  .bar{max-width:760px;padding:9px 16px calc(9px + env(safe-area-inset-bottom));box-shadow:0 -6px 18px rgba(31,35,40,.08)}
+  .bar-in{gap:10px}
+  .bar-tot .lbl{font-size:11px;font-weight:500;color:#69727D;text-transform:uppercase;letter-spacing:.035em}
+  .bar-tot .sum{font-size:24px;font-weight:700;letter-spacing:-.45px;font-variant-numeric:tabular-nums}
+  .bar-tot .sum .cur{font-size:12px;font-weight:500}
+  .new-order{margin-top:3px;padding:2px 0;min-height:auto;border:0;background:transparent;color:#69727D;border-radius:0;font-size:11px;font-weight:600;text-align:left}
+  .btn-view{font-size:14px;font-weight:650;padding:12px 16px;border-radius:8px;min-height:44px}
+  .cnt{font-size:11px;font-weight:700;padding:1px 6px}
+
+  .scrim{background:rgba(16,24,40,.38);backdrop-filter:blur(1px)}
+  .sheet{max-width:760px;background:var(--paper);border-radius:14px 14px 0 0;box-shadow:0 -14px 44px rgba(31,35,40,.16)}
+  .sheet-hd{padding:11px 14px 8px;border-bottom:1px solid var(--line);background:var(--card)}
+  .sheet-hd h2{font-size:18px;font-weight:700;letter-spacing:-.2px}
+  .sheet-hd .x{width:36px;height:36px;border-radius:8px;background:#F0F2F4;font-size:20px}
+  .jump-pay,.new-order{font-weight:600}
+  .jump-pay{font-size:12px;border:1px solid #C9CFD7;border-radius:7px;padding:8px 9px;min-height:36px;color:#4B5563;background:#fff}
+  .sheet-scroll{padding:10px 14px 16px}
+  .customer-info{border:1px solid var(--line);border-radius:8px;padding:9px 10px;margin:0 0 10px}
+  .customer-info summary{font-size:13px;font-weight:600}
+  .don-info{gap:9px}
+  .don-info label{font-size:11px;font-weight:600;color:#69727D}
+  .don-info input{font-size:15px;font-weight:400;padding:10px 11px;border:1px solid #C9CFD7;border-radius:7px}
+  .don-info input:focus,.qtyin:focus,.pay-row input:focus{border-color:var(--green);box-shadow:0 0 0 3px rgba(23,107,58,.09)}
+
+  .line{background:var(--card);border:0;border-bottom:1px solid #E2E6EA;border-radius:0;padding:11px 2px;margin:0}
+  .line-name{font-size:15px;font-weight:600;line-height:1.32}
+  .line-sub{font-size:12px;color:#7A838E;margin-top:3px}
+  .line-bot{margin-top:8px}
+  .line-total{font-size:16px;font-weight:650;font-variant-numeric:tabular-nums}
+  .del{font-size:12px;font-weight:500;padding:4px;color:#B42318}
+
+  .sheet-foot{padding:10px 14px calc(10px + env(safe-area-inset-bottom));border-top:1px solid var(--line)}
+  .sheet-summary{border:0;border-radius:0;padding:0;margin-top:8px}
+  .grand{margin-bottom:8px;padding:0}
+  .grand .lbl{font-size:13px;font-weight:500;color:#4B5563}
+  .grand .val{font-size:24px;font-weight:700;letter-spacing:-.35px;font-variant-numeric:tabular-nums}
+  .grand .val .cur{font-size:12px;font-weight:500}
+  .grand.sub{padding-top:7px;border-top:1px solid var(--line)}
+  .grand.sub .lbl{font-size:12px;font-weight:500}
+  .grand.sub .val{font-size:18px;font-weight:650}
+  .pay-row{margin:5px 0 9px}
+  .pay-row label{font-size:13px;font-weight:500;color:#4B5563}
+  .pay-row input{font-size:16px;font-weight:600;width:164px;padding:9px 28px 9px 10px;border:1px solid #C9CFD7;border-radius:7px;font-variant-numeric:tabular-nums}
+  .payfull{border:1px solid #AAB3BD;border-radius:7px;font-size:11px;font-weight:600;padding:9px 10px}
+  .grand.remain .val{color:#A86608}
+  .grand.remain.done .val{color:var(--green);font-size:18px}
+
+  .foot-btns{gap:7px}
+  .foot-btns button{font-size:12px;font-weight:600;border-radius:7px;min-height:40px;padding:8px 5px}
+  .b-clear{border:1px solid #C9CFD7!important;color:#5D6672}
+  .b-send{border:1px solid #AAB3BD!important;color:#334155}
+  .b-pdf{background:#4B5563;color:#fff}
+  .b-copy{background:var(--green);color:#fff}
+
+  .toast{bottom:128px;padding:10px 14px;border-radius:8px;font-size:13px;font-weight:500;background:#23272D;color:#fff}
+  .resume-dialog{border-radius:12px;padding:20px;box-shadow:0 18px 48px rgba(31,35,40,.22)}
+  .resume-dialog h2{font-size:18px}
+  .resume-dialog p{font-size:13px;line-height:1.55}
+  .resume-dialog button{min-height:42px;border-radius:8px;font-weight:600}
+
+  @media screen and (max-width:600px){
+    body{padding-bottom:96px}
+    header{padding:10px 12px 7px}
+    .brand{font-size:18px}
+    .toggle button{font-size:12px;padding:7px 8px}
+    #q{height:44px;font-size:16px}
+    .filters{overflow-x:auto;scrollbar-width:none}
+    .filters::-webkit-scrollbar{display:none}
+    main{padding:2px 12px 0}
+    .row{padding:11px 0;min-height:76px}
+    .row .name{font-size:15px}
+    .row .stepper button{width:34px;height:38px}
+    .row .qtyin{width:40px;font-size:16px}
+    .add{width:40px;height:40px}
+    .bar{padding:8px 12px calc(8px + env(safe-area-inset-bottom))}
+    .bar-tot .sum{font-size:22px}
+    .btn-view{font-size:13px;padding:11px 13px}
+    .sheet{border-radius:12px 12px 0 0}
+    .sheet-hd{padding:8px 12px}
+    .sheet-scroll{padding:8px 12px 14px}
+    .sheet-foot{padding:8px 12px calc(8px + env(safe-area-inset-bottom))}
+    .sheet-summary .grand .val{font-size:22px}
+    .pay-row label{font-size:12px}
+    .pay-row input{font-size:15px}
+    .foot-btns button{font-size:11px}
+  }
+
+  @media screen and (min-width:768px){
+    body{max-width:1040px;padding-bottom:116px}
+    header{padding-left:24px;padding-right:24px}
+    main{margin:0 auto;max-width:820px;padding-left:24px;padding-right:24px;box-shadow:0 0 0 1px #EBEDF0;background:#fff}
+    .bar{max-width:1040px;padding-left:28px;padding-right:28px}
+    .bar-in{max-width:820px;margin:0 auto}
+    .sheet{left:auto;right:0;top:0;bottom:0;width:min(500px,48vw);max-width:none;max-height:none;height:100dvh;border-radius:0;transform:translateX(100%);box-shadow:-14px 0 44px rgba(31,35,40,.16)}
+    .sheet.open{transform:translateX(0)}
+    .sheet-hd{padding:14px 16px 10px}
+    .sheet-scroll{padding:12px 16px 20px}
+    .sheet-foot{padding:12px 16px 16px}
+    .scrim.open{display:block}
+  }
+
   /* =========================================================
      IN HÓA ĐƠN A5 - NATIVE PRINT
      ========================================================= */
